@@ -37,62 +37,62 @@ import UserMenu from "./UserMenu"
 import { Trans } from "@lingui/react"
 import { i18n } from "@lingui/core"
 
-const components = [
-  {
-    title: <Trans id="ui.Alert Dialog" />,
-    to: "/docs/primitives/alert-dialog",
-    description: (
-      <Trans id="ui.Alert Dialog Desc">
-        A modal dialog that interrupts the user with important content and expects a response.
-      </Trans>
-    ),
-  },
-  {
-    title: <Trans id="ui.Hover Card" />,
-    to: "/docs/primitives/hover-card",
-    description: (
-      <Trans id="ui.Hover Card Desc">
-        For sighted users to preview content available behind a link.
-      </Trans>
-    ),
-  },
-  {
-    title: <Trans id="ui.Progress" />,
-    to: "/docs/primitives/progress",
-    description: (
-      <Trans id="ui.Progress Desc">
-        Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.
-      </Trans>
-    ),
-  },
-  {
-    title: <Trans id="ui.Scroll-area" />,
-    to: "/docs/primitives/scroll-area",
-    description: (
-      <Trans id="ui.Scroll-area Desc">
-        Visually or semantically separates content.
-      </Trans>
-    ),
-  },
-  {
-    title: <Trans id="ui.Tabs" />,
-    to: "/docs/primitives/tabs",
-    description: (
-      <Trans id="ui.Tabs Desc">
-        A set of layered sections of content—known as tab panels—that are displayed one at a time.
-      </Trans>
-    ),
-  },
-  {
-    title: <Trans id="ui.Tooltip" />,
-    to: "/docs/primitives/tooltip",
-    description: (
-      <Trans id="ui.Tooltip Desc">
-        A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it.
-      </Trans>
-    ),
-  },
-]
+// const components = [
+//   {
+//     title: <Trans id="ui.Alert Dialog" />,
+//     to: "/docs/primitives/alert-dialog",
+//     description: (
+//       <Trans id="ui.Alert Dialog Desc">
+//         A modal dialog that interrupts the user with important content and expects a response.
+//       </Trans>
+//     ),
+//   },
+//   {
+//     title: <Trans id="ui.Hover Card" />,
+//     to: "/docs/primitives/hover-card",
+//     description: (
+//       <Trans id="ui.Hover Card Desc">
+//         For sighted users to preview content available behind a link.
+//       </Trans>
+//     ),
+//   },
+//   {
+//     title: <Trans id="ui.Progress" />,
+//     to: "/docs/primitives/progress",
+//     description: (
+//       <Trans id="ui.Progress Desc">
+//         Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.
+//       </Trans>
+//     ),
+//   },
+//   {
+//     title: <Trans id="ui.Scroll-area" />,
+//     to: "/docs/primitives/scroll-area",
+//     description: (
+//       <Trans id="ui.Scroll-area Desc">
+//         Visually or semantically separates content.
+//       </Trans>
+//     ),
+//   },
+//   {
+//     title: <Trans id="ui.Tabs" />,
+//     to: "/docs/primitives/tabs",
+//     description: (
+//       <Trans id="ui.Tabs Desc">
+//         A set of layered sections of content—known as tab panels—that are displayed one at a time.
+//       </Trans>
+//     ),
+//   },
+//   {
+//     title: <Trans id="ui.Tooltip" />,
+//     to: "/docs/primitives/tooltip",
+//     description: (
+//       <Trans id="ui.Tooltip Desc">
+//         A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it.
+//       </Trans>
+//     ),
+//   },
+// ]
 
 export const NavigationMenuBar = () => {
   return (
@@ -104,7 +104,7 @@ export const NavigationMenuBar = () => {
               <NavigationMenuTrigger>
                 <Trans id="ui.Home" />
               </NavigationMenuTrigger>
-              <NavigationMenuContent>
+              {/* <NavigationMenuContent>
                 <ul className="grid gap-1 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
                   <li className="row-span-3">
                     <NavigationMenuLink asChild>
@@ -137,14 +137,14 @@ export const NavigationMenuBar = () => {
                     <Trans id="ui.Styles for headings, paragraphs, lists...etc." />
                   </ListItem>
                 </ul>
-              </NavigationMenuContent>
+              </NavigationMenuContent> */}
             </NavigationMenuItem>
 
             <NavigationMenuItem>
               <NavigationMenuTrigger>
                 <Trans id="ui.Components" />
               </NavigationMenuTrigger>
-              <NavigationMenuContent>
+              {/* <NavigationMenuContent>
                 <ul className="grid w-[400px] gap-2 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                   {components.map((component) => (
                     <ListItem key={component.to} title={component.title} to={component.to}>
@@ -152,7 +152,7 @@ export const NavigationMenuBar = () => {
                     </ListItem>
                   ))}
                 </ul>
-              </NavigationMenuContent>
+              </NavigationMenuContent> */}
             </NavigationMenuItem>
 
             <NavigationMenuItem>
@@ -246,13 +246,13 @@ export const NavigationMenuBar = () => {
                   <DropdownMenuSubTrigger>
                     <Trans id="ui.Components" />
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
+                  {/* <DropdownMenuSubContent>
                     {components.map((component) => (
                       <DropdownMenuItem key={component.to} asChild>
                         <Link to={component.to}>{component.title}</Link>
                       </DropdownMenuItem>
                     ))}
-                  </DropdownMenuSubContent>
+                  </DropdownMenuSubContent> */}
                 </DropdownMenuSub>
                 <DropdownMenuItem asChild>
                   <Link to="/docs">

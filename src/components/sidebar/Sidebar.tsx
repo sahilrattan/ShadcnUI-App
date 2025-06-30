@@ -219,8 +219,8 @@ const data = {
       url: "#",
       icon: Bot,
       items: [
-        { title: "ui.Genesis", url: "#" },
-        { title: "ui.Explorer", url: "#" },
+        { title: "ui.Genesis", url: "/kanban" },
+        { title: "ui.Chart", url: "/chart" },
         { title: "ui.Quantum", url: "#" },
       ],
     },

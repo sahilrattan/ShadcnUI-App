@@ -157,9 +157,9 @@ export const messages = {
   "ui.Notifications": "Notifications",
   "ui.Log out": "Log out",
   "ui.Teams": "Teams",
-  "ui.Add Team": "Add Team"
+  "ui.Add Team": "Add Team",
+"ui.Chart":"Chart",
 
-,
 
   "ui.Home": "Home",
   "ui.shadcn/ui": "shadcn/ui",

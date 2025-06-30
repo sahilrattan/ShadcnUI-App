@@ -20,6 +20,8 @@ import Account from "./components/Account";
 import { Calendar1 } from "./components/Calendar";
 import Chart from "./components/Chart";
 import { Toaster } from "./components/ui/sonner";
+import KanbanBoard from "./components/kanban/KanbanBoard";
+import OrgChart from "./components/OrganisationChart";
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
@@ -73,14 +75,15 @@ export default function App() {
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/account" element={<Account />} />
                   <Route path="/calendar" element={<Calendar1 />} />
-                  <Route path="/chart" element={<Chart/>}/>
-                   <Route path="/signup" element={<SignUpForm />} />
-  <Route path="/signin" element={<SignInForm />} />
+                  {/* <Route path="/chart" element={<Chart />} />  */}
+                  <Route path="/signup" element={<SignUpForm />} />
+                  <Route path="/signin" element={<SignInForm />} />
+                  <Route path="/kanban" element={<KanbanBoard />} />
+                  <Route path="/chart" element={<OrgChart/>}/>
                 </Routes>
               </div>
             </main>
-                    <Toaster richColors position="top-center" />
-
+            <Toaster richColors position="top-center" />
           </div>
         </SidebarProvider>
       </ThemeProvider>
