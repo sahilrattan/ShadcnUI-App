@@ -157,9 +157,9 @@ export const messages = {
   "ui.Notifications": "Notifications",
   "ui.Log out": "Log out",
   "ui.Teams": "Teams",
-  "ui.Add Team": "Add Team",
-"ui.Chart":"Chart",
+  "ui.Add Team": "Add Team"
 
+,
 
   "ui.Home": "Home",
   "ui.shadcn/ui": "shadcn/ui",
@@ -192,5 +192,4 @@ export const messages = {
   "ui.Blocks": "Blocks"
 
 }
-
 

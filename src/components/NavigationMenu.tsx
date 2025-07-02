@@ -36,6 +36,7 @@ import ColorThemeSwitcher from "./ThemeSwitcher"
 import UserMenu from "./UserMenu"
 import { Trans } from "@lingui/react"
 import { i18n } from "@lingui/core"
+import InstallButton from "./InstallButton"
 
 // const components = [
 //   {
@@ -226,6 +227,7 @@ export const NavigationMenuBar = () => {
           <ModeToggle />
           <ColorThemeSwitcher />
           <LanguageDialog />
+          <InstallButton/>
           <UserMenu />
 
           {/* Mobile Menu */}

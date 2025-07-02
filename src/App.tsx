@@ -22,6 +22,8 @@ import Chart from "./components/Chart";
 import { Toaster } from "./components/ui/sonner";
 import KanbanBoard from "./components/kanban/KanbanBoard";
 import OrgChart from "./components/OrganisationChart";
+import {InvoiceForm} from "./components/InvoiceForm";
+
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
@@ -80,6 +82,7 @@ export default function App() {
                   <Route path="/signin" element={<SignInForm />} />
                   <Route path="/kanban" element={<KanbanBoard />} />
                   <Route path="/chart" element={<OrgChart/>}/>
+                  <Route path="/billing" element={<InvoiceForm />} />
                 </Routes>
               </div>
             </main>

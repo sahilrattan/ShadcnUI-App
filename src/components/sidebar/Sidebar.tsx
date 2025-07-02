@@ -242,7 +242,7 @@ const data = {
       items: [
         { title: "ui.General", url: "#" },
         { title: "ui.Team", url: "#" },
-        { title: "ui.Billing", url: "#" },
+        { title: "ui.Billing", url: "/billing" },
         { title: "ui.Limits", url: "#" },
       ],
     },
