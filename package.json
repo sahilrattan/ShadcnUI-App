@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "lingui compile && vite build",
+    "build": "lingui && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "extract": "lingui extract",
