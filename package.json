@@ -5,13 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "lingui compile && vite build",
+    "build": " lingui && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "extract": "lingui extract",
     "compile": "lingui compile ",
     "i18n:refresh": "npm run extract && npm run compile"
   },
+  "engines": {
+  "node": "20.x"
+},
+
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.1.1",
