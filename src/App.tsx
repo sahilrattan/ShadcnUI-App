@@ -23,7 +23,7 @@ import { Toaster } from "./components/ui/sonner";
 import KanbanBoard from "./components/kanban/KanbanBoard";
 import OrgChart from "./components/OrganisationChart";
 import {InvoiceForm} from "./components/InvoiceForm";
-
+import { PushManager } from "./components/PushManager"; 
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
@@ -68,6 +68,8 @@ export default function App() {
             <main className="flex-1 min-h-screen overflow-x-hidden">
               <NavigationMenuBar />
               <SidebarTrigger />
+                        <PushManager /> {/* ✅ Add this line */}
+
               <div className="p-4">
                 <Routes>
                   <Route path="/" element={<Home />} />

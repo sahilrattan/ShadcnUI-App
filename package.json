@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-"build": "  vite build",
+    "build": "  vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "extract": "lingui extract",
@@ -13,9 +13,8 @@
     "i18n:refresh": "npm run extract && npm run compile"
   },
   "engines": {
-  "node": "20.x"
-},
-
+    "node": "20.x"
+  },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.1.1",
@@ -49,6 +48,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "final-form": "^5.0.0",
+    "firebase": "^11.10.0",
     "lucide-react": "^0.514.0",
     "make-plural": "^7.4.0",
     "next-auth": "^4.24.11",
