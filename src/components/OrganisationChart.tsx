@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { MdOutlineManageSearch } from "react-icons/md";
-
 import {
   Command,
   CommandEmpty,
@@ -123,7 +122,7 @@ export const OrgChart = () => {
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         setZoom((prevZoom) =>
-          Math.min(1, Math.max(0.3, prevZoom - e.deltaY * 0.003))
+          Math.min(1.5, Math.max(0.3, prevZoom - e.deltaY * 0.003))
         );
       }
     };
@@ -143,17 +142,35 @@ export const OrgChart = () => {
   return (
     <div className="overflow-auto w-full h-full relative space-y-4 p-4">
 
-      
+      {/* Search + Zoom Buttons */}
       <div className="fixed top-16 right-4 z-50">
         <div className="flex items-center gap-2">
+
+          {/* Search Button */}
           <button
             onClick={() => setShowSearch((prev) => !prev)}
             className="p-2 rounded-full bg-muted hover:bg-muted/70 transition"
           >
             <MdOutlineManageSearch />
-
           </button>
 
+          {/* Zoom In */}
+          <button
+            onClick={() => setZoom((z) => Math.min(z + 0.1, 1.5))}
+            className="p-2 rounded-full bg-muted hover:bg-muted/70 transition text-lg font-bold"
+          >
+            +
+          </button>
+
+          {/* Zoom Out */}
+          <button
+            onClick={() => setZoom((z) => Math.max(z - 0.1, 0.3))}
+            className="p-2 rounded-full bg-muted hover:bg-muted/70 transition text-lg font-bold"
+          >
+            −
+          </button>
+
+          {/* Search Dropdown */}
           {showSearch && (
             <Command className="w-[250px] border rounded-lg bg-white dark:bg-slate-900 shadow-lg">
               <CommandInput
