@@ -142,7 +142,8 @@ export const OrgChart = () => {
 
   return (
     <div className="overflow-auto w-full h-full relative space-y-4 p-4">
-      {/* Search icon and expandable Command */}
+
+      
       <div className="fixed top-16 right-4 z-50">
         <div className="flex items-center gap-2">
           <button
