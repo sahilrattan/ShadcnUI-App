@@ -24,7 +24,7 @@ import KanbanBoard from "./components/kanban/KanbanBoard";
 import OrgChart from "./components/OrganisationChart";
 import { InvoiceForm } from "./components/InvoiceForm";
 import { PushManager } from "./components/PushManager";
-import TicketingSystem from "./TicketManagement";
+import TicketingSystem from "./components/TicketManagement";
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
