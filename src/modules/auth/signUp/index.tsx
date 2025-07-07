@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { Trans } from "@lingui/react";
+// import { Trans } from "@lingui/react";
 import AsyncForm from "../../form/AsyncForm";
 import TextInputField from "../../form/formInputs/TextInputFiled";
 import PhoneNumberInput from "../../form/formInputs/PhoneNumberInput";
@@ -11,12 +11,13 @@ import PasswordInput from "@/modules/form/formInputs/PasswordField";
 import SelectField from "@/modules/form/formInputs/SelectField";
 import { useNavigate } from "react-router-dom";
 import TextareaField from "@/modules/form/formInputs/TextAreaField";
-import {DateOfBirthField} from "@/modules/form/formInputs/DateOfBirthField";
-import {i18n} from '@lingui/core'
+import { DateOfBirthField } from "@/modules/form/formInputs/DateOfBirthField";
+import { i18n } from "@lingui/core";
+import ImageUpload from "@/modules/form/formInputs/ImageUpload";
 const SignUpForm = () => {
   const navigate = useNavigate();
 
-  const handleSubmit = useCallback(async (values: any) => {
+  const handleSubmit = useCallback(async (values) => {
     console.log("Form submitted with values:", values);
   }, []);
 
@@ -34,7 +35,7 @@ const SignUpForm = () => {
         <div className="w-full max-w-md mx-auto mt-10 px-6 py-8 rounded-xl  dark:bg-zinc-900  space-y-6 bg-[var(--color-card)] text-[var(--color-card-foreground)] border border-[var(--color-border)] shadow-md">
           <div className="text-center">
             <h2 className="text-2xl font-semibold text-primary">
-            {i18n.t({id:"ui.Sign Up",message:"Sign Up"})}
+              {i18n.t({ id: "ui.Sign Up", message: "Sign Up" })}
             </h2>
           </div>
 
@@ -44,12 +45,15 @@ const SignUpForm = () => {
                 htmlFor="FirstName"
                 className="text-sm font-medium text-foreground mb-1"
               >
-            {i18n.t({id:"ui.First Name" ,message:"First Name"})}
+                {i18n.t({ id: "ui.First Name", message: "First Name" })}
               </label>
               <TextInputField
                 id="firstName"
                 name="firstName"
-                placeholder={i18n.t({id:"ui.First Name" ,message:"First Name"})}
+                placeholder={i18n.t({
+                  id: "ui.First Name",
+                  message: "First Name",
+                })}
                 type="text"
               />
             </div>
@@ -58,13 +62,15 @@ const SignUpForm = () => {
                 htmlFor="LastName"
                 className="text-sm font-medium text-foreground mb-1"
               >
-            {i18n.t({id:"ui.Last Name" ,message:"Last Name"})}
+                {i18n.t({ id: "ui.Last Name", message: "Last Name" })}
               </label>
               <TextInputField
                 id="lastName"
                 name="lastName"
-                placeholder=            {i18n.t({id:"ui.Last Name" ,message:"Last Name"})}
-
+                placeholder={i18n.t({
+                  id: "ui.Last Name",
+                  message: "Last Name",
+                })}
                 type="text"
               />
             </div>
@@ -75,7 +81,7 @@ const SignUpForm = () => {
               htmlFor="email"
               className="text-sm font-medium text-foreground block"
             >
-            {i18n.t({id:"Email" ,message:"Email"})}
+              {i18n.t({ id: "Email", message: "Email" })}
             </label>
             <TextInputField
               id="email"
@@ -90,32 +96,34 @@ const SignUpForm = () => {
               htmlFor="phone"
               className="text-sm font-medium text-foreground mb-1 block"
             >
-                       {i18n.t({id:"ui.Phone Number" ,message:"Phone Number"})}
-
+              {i18n.t({ id: "ui.Phone Number", message: "Phone Number" })}
             </label>
             <PhoneNumberInput
               id="phone"
               name="phone"
-              placeholder=                       {i18n.t({id:"ui.Phone Number" ,message:"Phone Number"})}
-
+              placeholder={i18n.t({
+                id: "ui.Phone Number",
+                message: "Phone Number",
+              })}
               type="tel"
             />
           </div>
-          <div >
-             <DateOfBirthField name="dob"/>
-             </div>
+          <div>
+            <DateOfBirthField name="dob" />
+          </div>
           <div>
             <label
               htmlFor="gender"
               className="text-sm font-medium text-foreground mb-1  block"
             >
-                    {i18n.t({id:"ui.Gender" ,message:"Gender"})}
-
+              {i18n.t({ id: "ui.Gender", message: "Gender" })}
             </label>
             <SelectField
               name="gender"
-              placeholder=       {i18n.t({id:"ui.Select a Gender" ,message:"Select a Gender"})}
-
+              placeholder={i18n.t({
+                id: "ui.Select a Gender",
+                message: "Select a Gender",
+              })}
               options={[
                 { label: "Male", value: "male" },
                 { label: "Female", value: "female" },
@@ -128,19 +136,36 @@ const SignUpForm = () => {
               htmlFor="phone"
               className="text-sm font-medium text-foreground mb-1 block "
             >
-               {i18n.t({id:"ui.Password" ,message:"Password"})}
+              {i18n.t({ id: "ui.Password", message: "Password" })}
             </label>
 
             <PasswordInput name="password" />
           </div>
           <div>
-            <label htmlFor="textarea" className="text-sm font-medium text-foreground mb-1 block">{i18n.t({id:"ui.Text",message:"Text"})}</label>
+            <label
+              htmlFor="ImageUpload"
+              className="text-sm font-medium text-foreground mb-1 block "
+            >
+              Image
+            </label>
+            <ImageUpload />
+          </div>
+          <div>
+            <label
+              htmlFor="textarea"
+              className="text-sm font-medium text-foreground mb-1 block"
+            >
+              {i18n.t({ id: "ui.Text", message: "Text" })}
+            </label>
             <TextareaField label="text" name="textarea" />
           </div>
 
           <div className="relative text-center text-sm after:border-t after:absolute after:inset-x-0 after:top-1/2 after:z-0">
             <span className="relative z-10 px-2 bg-background text-muted-foreground">
-             {i18n.t({id:"ui.or continue with",message:"or continue with"})}
+              {i18n.t({
+                id: "ui.or continue with",
+                message: "or continue with",
+              })}
             </span>
           </div>
 
@@ -158,19 +183,21 @@ const SignUpForm = () => {
 
           <div>
             <Button type="submit" className=" w-full">
-             {i18n.t({id:"ui.Sign Up",message:"Sign Up"})}
+              {i18n.t({ id: "ui.Sign Up", message: "Sign Up" })}
             </Button>
           </div>
 
           <div className="text-center text-sm text-foreground mt-4">
-                           {i18n.t({id:"ui.Already have an account?" ,message:"Already have an account?"})}
-{" "}
+            {i18n.t({
+              id: "ui.Already have an account?",
+              message: "Already have an account?",
+            })}{" "}
             <button
               onClick={handleToggleToSignIn}
               className="text-primary underline cursor-pointer"
               type="button"
             >
-              {i18n.t({id:"ui.Sign in" ,message:"Sign in"})}
+              {i18n.t({ id: "ui.Sign in", message: "Sign in" })}
             </button>
           </div>
         </div>

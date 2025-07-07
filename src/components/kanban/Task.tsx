@@ -1,9 +1,5 @@
 import type { Card } from "@/components/kanban/types";
-import {
-  IoTrash,
-  IoFlag,
-  IoCalendar,
-} from "react-icons/io5";
+import { IoTrash, IoFlag, IoCalendar } from "react-icons/io5";
 import { format } from "date-fns";
 
 import {
@@ -12,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CircleX } from "lucide-react";
+// import { CircleX } from "lucide-react";
 
 interface TaskProps {
   task: Card;
@@ -43,7 +39,6 @@ const Task = ({
   onClick,
   onDelete,
   onSetPriority,
-  
 }: TaskProps) => {
   const priorityColor = getPriorityColor(task.priority);
 
@@ -62,22 +57,20 @@ const Task = ({
         onClick={(e) => e.stopPropagation()}
       >
         <IoCalendar
-           className="text-gray-400 hover:text-blue-600 cursor-pointer"
-         title="Due Date"
-             />
-         {task.dueDate && (
-        <span className="text-xs text-gray-500">
-           {format(new Date(task.dueDate), "MMM d")}
-        </span>
-             )}
-
+          className="text-gray-400 hover:text-blue-600 cursor-pointer"
+          title="Due Date"
+        />
+        {task.dueDate && (
+          <span className="text-xs text-gray-500">
+            {format(new Date(task.dueDate), "MMM d")}
+          </span>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <IoFlag
               className={`${priorityColor} hover:opacity-80 cursor-pointer`}
               title="Priority"
-              
             />
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top">
@@ -101,7 +94,7 @@ const Task = ({
 
         <IoTrash
           className="text-gray-400  hover:text-red-500 cursor-pointer"
-          title="Delete" 
+          title="Delete"
           onClick={onDelete}
         />
       </div>

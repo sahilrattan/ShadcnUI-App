@@ -15,7 +15,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { IoFlag, IoCalendarOutline } from "react-icons/io5";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
@@ -31,7 +35,9 @@ const AddCardModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
 }) => {
   const [title, setTitle] = useState("");
-  const [priority, setPriority] = useState<"urgent" | "high" | "normal" | "low" | undefined>();
+  const [priority, setPriority] = useState<
+    "urgent" | "high" | "normal" | "low" | undefined
+  >();
   const [dueDate, setDueDate] = useState<Date | undefined>();
 
   const getPriorityColor = (p?: string) => {
@@ -55,7 +61,7 @@ const AddCardModal: React.FC<ConfirmationModalProps> = ({
         id: Date.now().toString(),
         title,
         priority,
-        dueDate: dueDate?.toISOString() ?? null,
+        dueDate: (dueDate ?? new Date()).toISOString(),
       });
       setTitle("");
       setPriority(undefined);
@@ -77,9 +83,7 @@ const AddCardModal: React.FC<ConfirmationModalProps> = ({
           onChange={(e) => setTitle(e.target.value)}
         />
 
-        {/* Actions: Calendar + Priority */}
         <div className="flex gap-4 items-center mt-4">
-          {/* Calendar Popover */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2">
@@ -97,12 +101,13 @@ const AddCardModal: React.FC<ConfirmationModalProps> = ({
             </PopoverContent>
           </Popover>
 
-          {/* Priority Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2">
                 <IoFlag className={`${getPriorityColor(priority)} text-lg`} />
-                {priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : "Priority"}
+                {priority
+                  ? priority.charAt(0).toUpperCase() + priority.slice(1)
+                  : "Priority"}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -125,9 +130,10 @@ const AddCardModal: React.FC<ConfirmationModalProps> = ({
           </DropdownMenu>
         </div>
 
-        {/* Footer */}
         <DialogFooter className="pt-4">
-          <Button onClick={onCancel} variant="outline">Cancel</Button>
+          <Button onClick={onCancel} variant="outline">
+            Cancel
+          </Button>
           <Button onClick={handleSubmit}>Submit</Button>
         </DialogFooter>
       </DialogContent>

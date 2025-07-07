@@ -7,9 +7,10 @@ export type Card = {
   id: string;
   title: string;
   subtasks?: Subtask[];
-  description?:string;
-  dueDate:string,
+  description?: string;
+  dueDate: string;
   priority?: "urgent" | "high" | "normal" | "low";
+  status?: "new" | "scheduled" | "inprogress" | "completed";
 };
 export type List = {
   id: string;

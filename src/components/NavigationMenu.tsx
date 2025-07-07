@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Link } from "react-router"
+import * as React from "react";
+import { Link } from "react-router";
 import {
   Menu,
   CircleCheckIcon,
   CircleHelpIcon,
   CircleIcon,
-} from "lucide-react"
+} from "lucide-react";
 
 import {
   NavigationMenu,
@@ -17,7 +17,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu"
+} from "@/components/ui/navigation-menu";
 
 import {
   DropdownMenu,
@@ -27,16 +27,16 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
-import { Button } from "@/components/ui/button"
-import ModeToggle from "./ModeToggle"
-import { LanguageDialog } from "./LanguageToggle"
-import ColorThemeSwitcher from "./ThemeSwitcher"
-import UserMenu from "./UserMenu"
-import { Trans } from "@lingui/react"
-import { i18n } from "@lingui/core"
-import InstallButton from "./InstallButton"
+import { Button } from "@/components/ui/button";
+import ModeToggle from "./ModeToggle";
+import { LanguageDialog } from "./LanguageToggle";
+import ColorThemeSwitcher from "./ThemeSwitcher";
+import UserMenu from "./UserMenu";
+import { Trans } from "@lingui/react";
+import { i18n } from "@lingui/core";
+import InstallButton from "./InstallButton";
 
 // const components = [
 //   {
@@ -157,7 +157,10 @@ export const NavigationMenuBar = () => {
             </NavigationMenuItem>
 
             <NavigationMenuItem>
-              <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <NavigationMenuLink
+                asChild
+                className={navigationMenuTriggerStyle()}
+              >
                 <Link to="/docs">
                   <Trans id="ui.Docs" />
                 </Link>
@@ -227,7 +230,7 @@ export const NavigationMenuBar = () => {
           <ModeToggle />
           <ColorThemeSwitcher />
           <LanguageDialog />
-          <InstallButton/>
+          <InstallButton />
           <UserMenu />
 
           {/* Mobile Menu */}
@@ -314,8 +317,8 @@ export const NavigationMenuBar = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 const ListItem = ({
   title,
@@ -334,7 +337,7 @@ const ListItem = ({
         </Link>
       </NavigationMenuLink>
     </li>
-  )
-}
+  );
+};
 
-export default NavigationMenuBar
+export default NavigationMenuBar;

@@ -18,13 +18,14 @@ import UserTable from "./components/user/UserTable";
 import Settings from "./routes/settings";
 import Account from "./components/Account";
 import { Calendar1 } from "./components/Calendar";
-import Chart from "./components/Chart";
+// import Chart from "./components/Chart";
 import { Toaster } from "./components/ui/sonner";
 import KanbanBoard from "./components/kanban/KanbanBoard";
 import OrgChart from "./components/OrganisationChart";
 import { InvoiceForm } from "./components/InvoiceForm";
 import { PushManager } from "./components/PushManager";
 import TicketingSystem from "./components/TicketManagement";
+import ProfilePage from "./components/ProfilePage";
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
@@ -86,6 +87,7 @@ export default function App() {
                   <Route path="/chart" element={<OrgChart />} />
                   <Route path="/billing" element={<InvoiceForm />} />
                   <Route path="/queries" element={<TicketingSystem />} />
+                  <Route path="/profile" element={<ProfilePage />} />
                 </Routes>
               </div>
             </main>
