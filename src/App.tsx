@@ -26,6 +26,7 @@ import { InvoiceForm } from "./components/InvoiceForm";
 import { PushManager } from "./components/PushManager";
 import TicketingSystem from "./components/TicketManagement";
 import ProfilePage from "./components/ProfilePage";
+import SidebarSubmenu from "./components/sidebar/SidebarSubmenu";
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
