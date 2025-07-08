@@ -7,13 +7,8 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { IoTrash } from "react-icons/io5";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -95,15 +90,14 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Card | null>(null);
 
-  const [form, setForm] = useState<
-    Partial<Card & { type?: string; assignee?: string }>
-  >({
+  const [form, setForm] = useState<Partial<Card>>({
     title: "",
     description: "",
     dueDate: undefined,
     priority: undefined,
     type: undefined,
     assignee: undefined,
+    status: undefined,
   });
 
   const allCards: { card: Card }[] = [];
@@ -157,7 +151,36 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
       const firstActiveList = safeList.find(
         (l) => l.title.toLowerCase() !== "completed"
       );
-      if (!firstActiveList) return;
+
+      if (!firstActiveList) {
+        const newList = {
+          id: crypto.randomUUID(),
+          title: "Tasks",
+          color: "bg-blue-400",
+          card: [],
+        };
+        setList((prev) => {
+          const updatedList = [...prev, newList];
+
+          const newCard: Card = {
+            id: crypto.randomUUID(),
+            title: form.title || "Untitled",
+            description: form.description || "",
+            dueDate: form.dueDate ?? "",
+            priority: form.priority,
+            status: form.status ?? "new",
+            type: form.type,
+            assignee: form.assignee,
+          };
+
+          return updatedList.map((l) =>
+            l.id === newList.id ? { ...l, card: [...l.card, newCard] } : l
+          );
+        });
+
+        setDialogOpen(false);
+        return;
+      }
 
       const newCard: Card = {
         id: crypto.randomUUID(),
@@ -165,17 +188,20 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
         description: form.description || "",
         dueDate: form.dueDate ?? "",
         priority: form.priority,
-        status: form.status ?? "new", // <-- This line fixes the issue
+        status: form.status ?? "new",
+        type: form.type,
+        assignee: form.assignee,
       };
 
       setList((prev) =>
         prev.map((col) =>
-          col.id === firstActiveList.id
+          col.id === firstActiveList!.id
             ? { ...col, card: [...col.card, newCard] }
             : col
         )
       );
     }
+
     setDialogOpen(false);
   };
 
@@ -228,34 +254,64 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
     const priorityColor = getPriorityColor(card.priority);
     const priorityLabel =
       PRIORITY_LABELS[card.priority as keyof typeof PRIORITY_LABELS] ?? "None";
-
+    const statusLabel =
+      STATUS_OPTIONS.find((s) => s.id === card.status)?.label ?? "New Task";
+    const handleDeleteTask = (cardId: string) => {
+      setList((prev) =>
+        prev.map((col) => ({
+          ...col,
+          card: col.card.filter((c) => c.id !== cardId),
+        }))
+      );
+    };
     return (
       <Draggable draggableId={card.id} index={index}>
         {(provided) => (
           <div
             ref={provided.innerRef}
             {...provided.draggableProps}
-            className="grid grid-cols-6 gap-4 py-3 px-4 hover:bg-gray-50 dark:hover:bg-zinc-900/50 border-b border-gray-100 dark:border-zinc-800"
+            className="group grid grid-cols-6 gap-4 py-3 px-4 hover:bg-gray-50 dark:hover:bg-zinc-900/50 border-b border-gray-100 dark:border-zinc-800 items-center"
             onClick={() => openEditDialog(card)}
           >
+            {/* Task Title */}
             <div className="flex items-center gap-2">
               <div {...provided.dragHandleProps} className="cursor-grab p-1">
                 <IoReorderThreeOutline className="w-4 h-4 text-gray-400" />
               </div>
               <span className="text-sm font-medium">{card.title}</span>
             </div>
-            <div className="text-sm text-gray-500">Scheduled</div>
-            <div className="text-sm text-gray-500">Operational</div>
+
+            {/* Status */}
+            <div className="text-sm text-gray-500">{statusLabel}</div>
+
+            {/* Type */}
+            <div className="text-sm text-gray-500">{card.type || "—"}</div>
+
+            {/* Due Date */}
             <div className="text-sm text-gray-500">
               {card.dueDate
                 ? format(parseISO(card.dueDate), "MMM d, yyyy")
                 : "—"}
             </div>
-            <div className="flex items-center gap-1">
+
+            {/* Priority */}
+            <div className="flex items-center gap-1 text-sm">
               <IoFlag className={priorityColor} />
               <span>{priorityLabel}</span>
             </div>
-            <div className="text-sm text-gray-500">Me</div>
+
+            {/* Assignee + Delete */}
+            <div className="flex justify-between items-center text-sm text-gray-500">
+              <span>{card.assignee || "—"}</span>
+              <IoTrash
+                className="ml-2 text-gray-400 hover:text-red-500 cursor-pointer transition-opacity"
+                title="Delete task"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteTask(card.id);
+                }}
+              />
+            </div>
           </div>
         )}
       </Draggable>
@@ -292,9 +348,15 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
                 <Droppable droppableId="active-tasks">
                   {(provided) => (
                     <div ref={provided.innerRef} {...provided.droppableProps}>
-                      {activeTasks.map(({ card }, index) => (
-                        <TaskRow key={card.id} card={card} index={index} />
-                      ))}
+                      {activeTasks.length > 0 ? (
+                        activeTasks.map(({ card }, index) => (
+                          <TaskRow key={card.id} card={card} index={index} />
+                        ))
+                      ) : (
+                        <div className="px-4 py-6 text-sm text-gray-500 text-center">
+                          No active tasks
+                        </div>
+                      )}
                       {provided.placeholder}
                     </div>
                   )}
@@ -323,9 +385,15 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
                 <Droppable droppableId="completed-tasks">
                   {(provided) => (
                     <div ref={provided.innerRef} {...provided.droppableProps}>
-                      {completedTasks.map(({ card }, index) => (
-                        <TaskRow key={card.id} card={card} index={index} />
-                      ))}
+                      {completedTasks.length > 0 ? (
+                        completedTasks.map(({ card }, index) => (
+                          <TaskRow key={card.id} card={card} index={index} />
+                        ))
+                      ) : (
+                        <div className="px-4 py-6 text-sm text-gray-500 text-center">
+                          No completed tasks
+                        </div>
+                      )}
                       {provided.placeholder}
                     </div>
                   )}
@@ -373,11 +441,9 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
             </div>
 
             {/* Right sidebar */}
-            <div className="bg-gray-50 border-l border-gray-200 p-6 space-y-4">
+            <div className=" border-l border-gray-200 p-6 space-y-4">
               <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500">
-                  Create in
-                </p>
+                <p className="text-xs uppercase font-semibold ">Create in</p>
                 <div className="flex items-center gap-2">
                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-white text-xs font-semibold">
                     S
@@ -387,12 +453,13 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500">
-                  Type
-                </p>
+                <p className="text-xs uppercase font-semibold ">Type</p>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="justify-start w-full">
+                    <Button
+                      variant="ghost"
+                      className="justify-start text-gray-600 w-full"
+                    >
                       {form.type ?? "Select type"}
                     </Button>
                   </DropdownMenuTrigger>
@@ -415,12 +482,13 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500">
-                  Status
-                </p>
+                <p className="text-xs uppercase font-semibold ">Status</p>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="justify-start w-full">
+                    <Button
+                      variant="ghost"
+                      className="justify-start text-gray-600 w-full"
+                    >
                       {form.status
                         ? STATUS_OPTIONS.find((s) => s.id === form.status)
                             ?.label
@@ -432,7 +500,7 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
                       <DropdownMenuItem
                         key={s.id}
                         onClick={() =>
-                          setForm({ ...form, status: s.id as any })
+                          setForm({ ...form, status: s.id as Card["status"] })
                         }
                       >
                         <div className="flex items-center gap-2">
@@ -447,12 +515,13 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
 
               {/* Priority */}
               <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500">
-                  Priority
-                </p>
+                <p className="text-xs uppercase font-semibold ">Priority</p>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="justify-start w-full">
+                    <Button
+                      variant="ghost"
+                      className="justify-start text-gray-600  w-full"
+                    >
                       {form.priority ? (
                         <span className="flex items-center gap-1">
                           <IoFlag className={getPriorityColor(form.priority)} />
@@ -467,7 +536,12 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
                     {Object.entries(PRIORITY_LABELS).map(([k, v]) => (
                       <DropdownMenuItem
                         key={k}
-                        onClick={() => setForm({ ...form, priority: k as any })}
+                        onClick={() =>
+                          setForm({
+                            ...form,
+                            priority: k as keyof typeof PRIORITY_LABELS,
+                          })
+                        }
                       >
                         <div className="flex items-center gap-2">
                           <IoFlag className={getPriorityColor(k)} />
@@ -480,12 +554,13 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500">
-                  Assignee
-                </p>
+                <p className="text-xs uppercase font-semibold ">Assignee</p>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="justify-start w-full">
+                    <Button
+                      variant="ghost"
+                      className="justify-start  text-gray-600  w-full"
+                    >
                       {form.assignee ?? "Select assignee"}
                     </Button>
                   </DropdownMenuTrigger>
@@ -503,12 +578,13 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500">
-                  Due date
-                </p>
+                <p className="text-xs uppercase font-semibold ">Due date</p>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" className="justify-start w-full">
+                    <Button
+                      variant="ghost"
+                      className="justify-start text-gray-600  w-full"
+                    >
                       {form.dueDate
                         ? format(parseISO(form.dueDate), "MMM d, yyyy")
                         : "Pick due date"}

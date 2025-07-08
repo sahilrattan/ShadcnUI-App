@@ -14,7 +14,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { IoFlag, IoCalendarOutline } from "react-icons/io5";
 import {
   Popover,
   PopoverContent,
@@ -22,9 +21,11 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { IoFlag, IoCalendarOutline } from "react-icons/io5";
+import type { Card } from "./types";
 
 export type ConfirmationModalProps = {
-  onConfirm: (taskData: any) => void;
+  onConfirm: (taskData: Card) => void;
   onCancel: () => void;
   open: boolean;
 };
@@ -35,10 +36,11 @@ const AddCardModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
 }) => {
   const [title, setTitle] = useState("");
-  const [priority, setPriority] = useState<
-    "urgent" | "high" | "normal" | "low" | undefined
-  >();
+  const [priority, setPriority] = useState<Card["priority"]>();
   const [dueDate, setDueDate] = useState<Date | undefined>();
+  const [status, setStatus] = useState<Card["status"]>();
+  const [type, setType] = useState<string>();
+  const [assignee, setAssignee] = useState<string>();
 
   const getPriorityColor = (p?: string) => {
     switch (p) {
@@ -61,11 +63,17 @@ const AddCardModal: React.FC<ConfirmationModalProps> = ({
         id: Date.now().toString(),
         title,
         priority,
-        dueDate: (dueDate ?? new Date()).toISOString(),
+        dueDate: dueDate?.toISOString(),
+        status,
+        type,
+        assignee,
       });
       setTitle("");
       setPriority(undefined);
       setDueDate(undefined);
+      setStatus(undefined);
+      setType(undefined);
+      setAssignee(undefined);
     }
   };
 
@@ -76,13 +84,14 @@ const AddCardModal: React.FC<ConfirmationModalProps> = ({
           <DialogTitle>Add Task</DialogTitle>
         </DialogHeader>
 
-        {/* Title input */}
+        {/* Title */}
         <Input
           placeholder="Enter task title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
 
+        {/* Due Date and Priority */}
         <div className="flex gap-4 items-center mt-4">
           <Popover>
             <PopoverTrigger asChild>
@@ -111,18 +120,15 @@ const AddCardModal: React.FC<ConfirmationModalProps> = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setPriority("urgent")}>
-                <IoFlag className="text-red-500 mr-2" /> Urgent
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setPriority("high")}>
-                <IoFlag className="text-yellow-500 mr-2" /> High
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setPriority("normal")}>
-                <IoFlag className="text-blue-500 mr-2" /> Normal
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setPriority("low")}>
-                <IoFlag className="text-gray-500 mr-2" /> Low
-              </DropdownMenuItem>
+              {["urgent", "high", "normal", "low"].map((level) => (
+                <DropdownMenuItem
+                  key={level}
+                  onClick={() => setPriority(level as Card["priority"])}
+                >
+                  <IoFlag className={`${getPriorityColor(level)} mr-2`} />
+                  {level.charAt(0).toUpperCase() + level.slice(1)}
+                </DropdownMenuItem>
+              ))}
               <DropdownMenuItem onClick={() => setPriority(undefined)}>
                 <span className="text-gray-400 mr-2">🚫</span> Clear
               </DropdownMenuItem>
@@ -130,6 +136,68 @@ const AddCardModal: React.FC<ConfirmationModalProps> = ({
           </DropdownMenu>
         </div>
 
+        {/* Type */}
+        <div className="mt-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full justify-start">
+                {type ?? " Type"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {["Operational", "Administrative", "Research", "Support"].map(
+                (t) => (
+                  <DropdownMenuItem key={t} onClick={() => setType(t)}>
+                    {t}
+                  </DropdownMenuItem>
+                )
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Status */}
+        <div className="mt-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full justify-start">
+                {status
+                  ? status.charAt(0).toUpperCase() + status.slice(1)
+                  : " Status"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {["new", "scheduled", "inprogress", "completed"].map((s) => (
+                <DropdownMenuItem
+                  key={s}
+                  onClick={() => setStatus(s as Card["status"])}
+                >
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Assignee */}
+        <div className="mt-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full justify-start">
+                {assignee ?? " Assignee"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {["Me", "John Doe", "Jane Smith", "Team A"].map((a) => (
+                <DropdownMenuItem key={a} onClick={() => setAssignee(a)}>
+                  {a}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Footer */}
         <DialogFooter className="pt-4">
           <Button onClick={onCancel} variant="outline">
             Cancel

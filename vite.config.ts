@@ -43,7 +43,7 @@ export default defineConfig({
             type: "image/png",
           },
           {
-            src: "/pwa-512x512-maskable.png", 
+            src: "/pwa-512x512-maskable.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
@@ -66,6 +66,7 @@ export default defineConfig({
       },
     }),
   ],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

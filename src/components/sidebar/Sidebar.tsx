@@ -11,7 +11,7 @@ import {
   Settings2,
   SquareTerminal,
 } from "lucide-react";
-
+import { useState } from "react";
 import { NavMain } from "@/components/sidebar/nav-main";
 import { NavProjects } from "@/components/sidebar/nav-projects";
 import { NavUser } from "@/components/sidebar/nav-user";
@@ -103,25 +103,35 @@ const data = {
 };
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  const handleItemSelect = (slug: string) => {
+    if (slug === "genesis") {
+      setCollapsed(true);
+    } else {
+      setCollapsed(false);
+    }
+  };
+
   return (
-    <div className="flex flex-row h-screen">
-      {/* Main Sidebar */}
-      <Sidebar collapsible="icon" {...props}>
+    <div className="flex h-screen">
+      <Sidebar collapsed={collapsed} onCollapseChange={setCollapsed} {...props}>
         <SidebarHeader>
           <TeamSwitcher teams={data.teams} />
         </SidebarHeader>
+
         <SidebarContent>
-          <NavMain items={data.navMain} />
+          <NavMain items={data.navMain} onItemSelect={handleItemSelect} />
           <NavProjects projects={data.projects} />
         </SidebarContent>
+
         <SidebarFooter>
           <NavUser user={data.user} />
         </SidebarFooter>
+
         <SidebarRail />
       </Sidebar>
-
-      {/* Secondary Sidebar */}
-      <SecondarySidebar />
+      {collapsed && <SecondarySidebar />}
     </div>
   );
 }

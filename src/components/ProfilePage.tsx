@@ -13,8 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-export default function ProfilePage() {
+import ChangePasswordForm from "@/modules/auth/changePassword";
+// import ChangePasswordForm from "@/modules/auth/changePassword";
+export const ProfilePage = () => {
   const [firstName, setFirstName] = useState("Sahil");
   const [lastName, setLastName] = useState("Rattan");
   const [country, setCountry] = useState("");
@@ -25,10 +26,6 @@ export default function ProfilePage() {
 
   const handleSave = () => {
     console.log("Profile saved");
-  };
-
-  const handleDeleteAccount = () => {
-    console.log("Delete account");
   };
 
   return (
@@ -203,16 +200,15 @@ export default function ProfilePage() {
                 </Button>
               </div>
 
-              {/* Delete Account Section */}
               <div className="pt-8 border-t border-gray-200">
                 <h3 className="text-lg font-semibold ">Delete account</h3>
                 <p className=" text-sm mb-4">
                   Once you delete your account, there is no going back. Please
                   be certain.
                 </p>
+
                 <Button
                   variant="destructive"
-                  onClick={handleDeleteAccount}
                   className="bg-red-600 hover:bg-red-700"
                 >
                   Delete Account
@@ -234,12 +230,13 @@ export default function ProfilePage() {
           </TabsContent>
 
           <TabsContent value="security">
-            <div className="py-12 text-center text-gray-500">
-              Security content coming soon...
+            <div className="pt-8 border-t  items-start border-gray-200">
+              <ChangePasswordForm />
             </div>
           </TabsContent>
         </Tabs>
       </div>
     </div>
   );
-}
+};
+export default ProfilePage;

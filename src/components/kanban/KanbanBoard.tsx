@@ -10,6 +10,7 @@ import TableView from "./TableView";
 import StatusView from "./StatusView";
 import { CiViewTable } from "react-icons/ci";
 import { MdOutlineViewKanban } from "react-icons/md";
+
 const LOCAL_KEY = "kanban-board";
 
 const KanbanBoard = () => {
@@ -83,6 +84,28 @@ const KanbanBoard = () => {
     }
   };
 
+  const handleStatusDragEnd = (result: any) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    )
+      return;
+
+    setList((prevList) =>
+      prevList.map((listItem) => ({
+        ...listItem,
+        card: listItem.card.map((card) =>
+          card.id === draggableId
+            ? { ...card, status: destination.droppableId }
+            : card
+        ),
+      }))
+    );
+  };
+
   return (
     <div className="min-h-screen p-6 bg-background text-foreground overflow-x-auto">
       {/* View Toggle */}
@@ -109,7 +132,9 @@ const KanbanBoard = () => {
         </Button>
       </div>
 
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext
+        onDragEnd={view === "status" ? handleStatusDragEnd : onDragEnd}
+      >
         {view === "kanban" ? (
           <>
             <Droppable
@@ -159,7 +184,7 @@ const KanbanBoard = () => {
         ) : view === "table" ? (
           <TableView list={list} setList={setList} />
         ) : (
-          <StatusView lists={list} onDragEnd={onDragEnd} />
+          <StatusView lists={list} onDragEnd={handleStatusDragEnd} />
         )}
       </DragDropContext>
     </div>

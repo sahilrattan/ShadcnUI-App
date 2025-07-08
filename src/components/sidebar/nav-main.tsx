@@ -19,9 +19,7 @@ import {
 import { Link } from "react-router-dom";
 import { Trans } from "@lingui/react";
 
-export const NavMain = ({
-  items,
-}: {
+interface NavMainProps {
   items: {
     title: string;
     url: string;
@@ -32,10 +30,15 @@ export const NavMain = ({
       url: string;
     }[];
   }[];
-}) => {
+  onItemSelect?: (slug: string) => void; // optional prop
+}
+
+export const NavMain = ({ items, onItemSelect }: NavMainProps) => {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel><Trans id="ui.Platform" /></SidebarGroupLabel>
+      <SidebarGroupLabel>
+        <Trans id="ui.Platform" />
+      </SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible
@@ -48,7 +51,9 @@ export const NavMain = ({
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton className="cursor-pointer">
                   {item.icon && <item.icon />}
-                  <span><Trans id={item.title} /></span>
+                  <span>
+                    <Trans id={item.title} />
+                  </span>
                   <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                 </SidebarMenuButton>
               </CollapsibleTrigger>
@@ -57,8 +62,20 @@ export const NavMain = ({
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuSubButton asChild>
-                        <Link to={subItem.url}>
-                          <span><Trans id={subItem.title} /></span>
+                        <Link
+                          to={subItem.url}
+                          onClick={() => {
+                            const subTitle = subItem.title.toLowerCase();
+                            if (subTitle.includes("genesis")) {
+                              onItemSelect?.("genesis");
+                            } else {
+                              onItemSelect?.("other");
+                            }
+                          }}
+                        >
+                          <span>
+                            <Trans id={subItem.title} />
+                          </span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>

@@ -16,7 +16,7 @@ export const SecondarySidebar = () => {
         className="
           flex flex-col
           items-center
-          w-16
+          w-10
           h-screen
           bg-muted
           border-r

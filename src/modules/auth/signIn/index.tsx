@@ -16,34 +16,58 @@ const SignInForm = () => {
 
   const handleSubmit = useCallback(
     async (values) => {
-      console.log("Sign in values:", values);
-
       try {
-        const response = await fetch("http://localhost:4000/api/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(values),
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/identity/login`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: values.email,
+              password: values.password,
+              twoFactorCode: "",
+              twoFactorRecoveryCode: "",
+            }),
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Invalid credentials");
         }
 
-        const data = await response.json();
-        const token = data.token;
+        const { accessToken, refreshToken } = await response.json();
 
-        Cookies.set("authToken", token, {
-          expires: 7,
-          httpOnly: true,
+        Cookies.set("accessToken", accessToken, {
+          expires: 1,
           secure: true,
           sameSite: "lax",
         });
 
-        console.log("Token stored in cookie:", token);
+        Cookies.set("refreshToken", refreshToken, {
+          expires: 7,
+          secure: true,
+          sameSite: "lax",
+        });
 
-        navigate("/");
+        const departmentRes = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/department`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (!departmentRes.ok) {
+          throw new Error("Failed to fetch departments");
+        }
+
+        const departments = await departmentRes.json();
+
+        navigate("/departments", { state: { departments } });
       } catch (error) {
         console.error("Login error:", error);
         alert("Login failed: " + error.message);
@@ -56,6 +80,10 @@ const SignInForm = () => {
     navigate("/signup");
   };
 
+  const handleChangePassword = () => {
+    navigate("/change-password");
+  };
+
   return (
     <AsyncForm
       name="SignInForm"
@@ -63,7 +91,7 @@ const SignInForm = () => {
       ValidationSchema={SignInValidationSchema}
     >
       {(formProps) => (
-        <div className="w-full max-w-md mx-auto mt-10 px-6 py-8 rounded-xl  dark:bg-zinc-900  space-y-6 bg-[var(--color-card)] text-[var(--color-card-foreground)] border border-[var(--color-border)] shadow-md">
+        <div className="w-full max-w-md mx-auto mt-10 px-6 py-8 rounded-xl dark:bg-zinc-900 space-y-6 bg-[var(--color-card)] text-[var(--color-card-foreground)] border border-[var(--color-border)] shadow-md">
           <div className="text-center">
             <h2 className="text-2xl font-semibold text-primary">
               {i18n.t({ id: "ui.Sign In", message: "Sign In" })}
@@ -103,6 +131,19 @@ const SignInForm = () => {
           </div>
 
           <div>
+            <button
+              onClick={handleChangePassword}
+              className="text-primary justify-end underline"
+              type="button"
+            >
+              {i18n.t({
+                id: "ui.Forgot Your Password",
+                message: "Forgot Your Password?",
+              })}
+            </button>
+          </div>
+
+          <div>
             <Button type="submit" className="w-full">
               {formProps.submitting ? (
                 <Trans id="Signing In..." />
@@ -112,18 +153,20 @@ const SignInForm = () => {
             </Button>
           </div>
 
-          <div className="text-center text-sm text-foreground mt-4">
-            {i18n.t({
-              id: "ui.Don't have an account?",
-              message: "Don't have an account?",
-            })}{" "}
-            <button
-              onClick={handleToggleToSignUp}
-              className="text-primary underline"
-              type="button"
-            >
-              {i18n.t({ id: "ui.Sign up", message: "Sign up" })}
-            </button>
+          <div className="text-center text-sm text-foreground mt-4 space-y-2">
+            <div>
+              {i18n.t({
+                id: "ui.Don't have an account?",
+                message: "Don't have an account?",
+              })}{" "}
+              <button
+                onClick={handleToggleToSignUp}
+                className="text-primary underline"
+                type="button"
+              >
+                {i18n.t({ id: "ui.Sign up", message: "Sign up" })}
+              </button>
+            </div>
           </div>
         </div>
       )}
