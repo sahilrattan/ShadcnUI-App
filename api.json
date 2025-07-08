@@ -864,6 +864,38 @@
         },
         "additionalProperties": false
       },
+      "Department": {
+        "type": "object",
+        "properties": {
+          "departmentID": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "email": { "type": "string" },
+          "isActive": { "type": "boolean" },
+          "isVoided": { "type": "boolean" },
+          "createdBy": { "type": "string" },
+          "createdDate": { "type": "string", "format": "date-time" },
+          "lastModifiedBy": { "type": ["string", "null"] },
+          "lastModifiedDate": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        },
+        "required": ["departmentID", "name"]
+      },
+      "DepartmentListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Department" }
+          },
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "validationErrors": { "type": ["object", "null"] }
+        }
+      },
+
       "CityDetailVM": {
         "type": "object",
         "properties": {
@@ -1173,6 +1205,7 @@
         },
         "additionalProperties": false
       },
+
       "ProblemDetails": {
         "type": "object",
         "properties": {

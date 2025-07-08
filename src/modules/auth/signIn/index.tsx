@@ -11,33 +11,32 @@ import SignInValidationSchema from "./validationSchema";
 import { i18n } from "@lingui/core";
 import Cookies from "js-cookie";
 
+// 👇 Import OpenAPI config and service
+import { OpenAPI } from "@/api/core/OpenAPI";
+import { AppServerService } from "@/api/services/AppServerService";
+import type { LoginRequest } from "@/api//models/LoginRequest";
+
 const SignInForm = () => {
   const navigate = useNavigate();
 
   const handleSubmit = useCallback(
     async (values) => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/identity/login`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: values.email,
-              password: values.password,
-              twoFactorCode: "",
-              twoFactorRecoveryCode: "",
-            }),
-          }
+        const body: LoginRequest = {
+          email: values.email,
+          password: values.password,
+          twoFactorCode: "",
+          twoFactorRecoveryCode: "",
+        };
+
+        // 👇 Authenticate user
+        const response = await AppServerService.postApiVIdentityLogin(
+          false,
+          false,
+          body
         );
 
-        if (!response.ok) {
-          throw new Error("Invalid credentials");
-        }
-
-        const { accessToken, refreshToken } = await response.json();
+        const { accessToken, refreshToken } = response;
 
         Cookies.set("accessToken", accessToken, {
           expires: 1,
@@ -51,26 +50,29 @@ const SignInForm = () => {
           sameSite: "lax",
         });
 
-        const departmentRes = await fetch(
+        // 👇 Set OpenAPI auth token
+        OpenAPI.TOKEN = accessToken;
+
+        // 👇 Fetch departments using the generated SDK
+        const departmentResponse = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/department`,
           {
-            method: "GET",
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
           }
         );
 
-        if (!departmentRes.ok) {
+        if (!departmentResponse.ok) {
           throw new Error("Failed to fetch departments");
         }
 
-        const departments = await departmentRes.json();
+        const { data: departments } = await departmentResponse.json();
 
         navigate("/departments", { state: { departments } });
       } catch (error) {
         console.error("Login error:", error);
-        alert("Login failed: " + error.message);
+        alert("Login failed: " + (error?.message || "Unknown error"));
       }
     },
     [navigate]

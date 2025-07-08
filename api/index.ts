@@ -16,6 +16,8 @@ export type { CreateCityDto } from './models/CreateCityDto';
 export type { DateOnly } from './models/DateOnly';
 export { DayOfWeek } from './models/DayOfWeek';
 export type { DeleteCityCommandResponse } from './models/DeleteCityCommandResponse';
+export type { Department } from './models/Department';
+export type { DepartmentListResponse } from './models/DepartmentListResponse';
 export type { ForgotPasswordRequest } from './models/ForgotPasswordRequest';
 export type { GetCityDetailQueryResponse } from './models/GetCityDetailQueryResponse';
 export type { GetCityListQueryResponse } from './models/GetCityListQueryResponse';
