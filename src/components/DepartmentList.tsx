@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+// import { Button } from "./ui/button";
 
 const DepartmentList = () => {
   const { state } = useLocation();
@@ -23,6 +24,7 @@ const DepartmentList = () => {
           </li>
         ))}
       </ul>
+      {/* <Button>LogOut</Button> */}
     </div>
   );
 };

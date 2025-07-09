@@ -34,6 +34,35 @@
         }
       }
     },
+    "/api/v{version}/department": {
+      "get": {
+        "tags": ["Department"],
+        "operationId": "getApiVDepartment",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
     "/api/v{version}/identity/login": {
       "post": {
         "tags": ["App.Server"],
@@ -864,6 +893,17 @@
         },
         "additionalProperties": false
       },
+      "DepartmentListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Department"
+            }
+          }
+        }
+      },
       "Department": {
         "type": "object",
         "properties": {
@@ -871,31 +911,11 @@
           "name": { "type": "string" },
           "description": { "type": "string" },
           "email": { "type": "string" },
-          "isActive": { "type": "boolean" },
-          "isVoided": { "type": "boolean" },
           "createdBy": { "type": "string" },
-          "createdDate": { "type": "string", "format": "date-time" },
-          "lastModifiedBy": { "type": ["string", "null"] },
-          "lastModifiedDate": {
-            "type": ["string", "null"],
-            "format": "date-time"
-          }
+          "createdDate": { "type": "string", "format": "date-time" }
         },
         "required": ["departmentID", "name"]
       },
-      "DepartmentListResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/Department" }
-          },
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
-          "validationErrors": { "type": ["object", "null"] }
-        }
-      },
-
       "CityDetailVM": {
         "type": "object",
         "properties": {

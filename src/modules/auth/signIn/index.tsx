@@ -10,70 +10,57 @@ import { Button } from "@/components/ui/button";
 import SignInValidationSchema from "./validationSchema";
 import { i18n } from "@lingui/core";
 import Cookies from "js-cookie";
-
-// 👇 Import OpenAPI config and service
-import { OpenAPI } from "@/api/core/OpenAPI";
 import { AppServerService } from "@/api/services/AppServerService";
-import type { LoginRequest } from "@/api//models/LoginRequest";
+import type { LoginRequest } from "@/api/models/LoginRequest";
+import type { AccessTokenResponse } from "@/api/models/AccessTokenResponse";
+import { DepartmentService } from "@/api/services/DepartmentService";
+import { OpenAPI } from "@/api/core/OpenAPI";
 
 const SignInForm = () => {
   const navigate = useNavigate();
 
   const handleSubmit = useCallback(
-    async (values) => {
-      try {
-        const body: LoginRequest = {
-          email: values.email,
-          password: values.password,
-          twoFactorCode: "",
-          twoFactorRecoveryCode: "",
-        };
+    (values) => {
+      const requestBody: LoginRequest = {
+        email: values.email,
+        password: values.password,
+        twoFactorCode: "",
+        twoFactorRecoveryCode: "",
+      };
 
-        // 👇 Authenticate user
-        const response = await AppServerService.postApiVIdentityLogin(
-          false,
-          false,
-          body
-        );
+      AppServerService.postApiVIdentityLogin(false, false, requestBody)
+        .then((response: AccessTokenResponse) => {
+          const { accessToken, refreshToken } = response;
 
-        const { accessToken, refreshToken } = response;
+          // Save tokens
+          Cookies.set("accessToken", accessToken ?? "", {
+            expires: 1,
+            secure: true,
+            sameSite: "lax",
+          });
+          Cookies.set("refreshToken", refreshToken ?? "", {
+            expires: 7,
+            secure: true,
+            sameSite: "lax",
+          });
 
-        Cookies.set("accessToken", accessToken, {
-          expires: 1,
-          secure: true,
-          sameSite: "lax",
-        });
-
-        Cookies.set("refreshToken", refreshToken, {
-          expires: 7,
-          secure: true,
-          sameSite: "lax",
-        });
-
-        // 👇 Set OpenAPI auth token
-        OpenAPI.TOKEN = accessToken;
-
-        // 👇 Fetch departments using the generated SDK
-        const departmentResponse = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/department`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
+          if (accessToken) {
+            OpenAPI.TOKEN = accessToken;
           }
-        );
 
-        if (!departmentResponse.ok) {
-          throw new Error("Failed to fetch departments");
-        }
-
-        const { data: departments } = await departmentResponse.json();
-
-        navigate("/departments", { state: { departments } });
-      } catch (error) {
-        console.error("Login error:", error);
-        alert("Login failed: " + (error?.message || "Unknown error"));
-      }
+          // Fetch department list
+          return DepartmentService.getApiVDepartment("1");
+        })
+        .then((departmentData) => {
+          // Redirect with department data
+          navigate("/department-list", {
+            state: { departments: departmentData },
+          });
+        })
+        .catch((error) => {
+          console.error("Login error:", error);
+          alert("Login failed: " + (error?.message || "Unknown error"));
+        });
     },
     [navigate]
   );
@@ -95,7 +82,7 @@ const SignInForm = () => {
       {(formProps) => (
         <div className="w-full max-w-md mx-auto mt-10 px-6 py-8 rounded-xl dark:bg-zinc-900 space-y-6 bg-[var(--color-card)] text-[var(--color-card-foreground)] border border-[var(--color-border)] shadow-md">
           <div className="text-center">
-            <h2 className="text-2xl font-semibold text-primary">
+            <h2 className="text-2xl font-semibold   text-primary">
               {i18n.t({ id: "ui.Sign In", message: "Sign In" })}
             </h2>
           </div>
@@ -135,7 +122,7 @@ const SignInForm = () => {
           <div>
             <button
               onClick={handleChangePassword}
-              className="text-primary justify-end underline"
+              className="text-primary  cursor-pointer justify-end underline"
               type="button"
             >
               {i18n.t({
@@ -146,7 +133,7 @@ const SignInForm = () => {
           </div>
 
           <div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className=" cursor-pointer w-full">
               {formProps.submitting ? (
                 <Trans id="Signing In..." />
               ) : (
@@ -163,7 +150,7 @@ const SignInForm = () => {
               })}{" "}
               <button
                 onClick={handleToggleToSignUp}
-                className="text-primary underline"
+                className="text-primary underline cursor-pointer"
                 type="button"
               >
                 {i18n.t({ id: "ui.Sign up", message: "Sign up" })}

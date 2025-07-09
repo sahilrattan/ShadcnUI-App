@@ -26,7 +26,6 @@ import { InvoiceForm } from "./components/InvoiceForm";
 import { PushManager } from "./components/PushManager";
 import TicketingSystem from "./components/TicketManagement";
 import ProfilePage from "./components/ProfilePage";
-import SidebarSubmenu from "./components/sidebar/SidebarSubmenu";
 import ChangePasswordForm from "./modules/auth/changePassword";
 import DepartmentList from "./components/DepartmentList";
 const localeMessages = {
@@ -95,7 +94,7 @@ export default function App() {
                     path="/change-password"
                     element={<ChangePasswordForm />}
                   />
-                  <Route path="/departments" element={<DepartmentList />} />
+                  <Route path="/department-list" element={<DepartmentList />} />
                 </Routes>
               </div>
             </main>

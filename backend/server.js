@@ -31,7 +31,7 @@ const generateRefreshToken = (user) => {
 };
 
 // Login endpoint
-app.post("/api/login", (req, res) => {
+app.post("/identity/login", (req, res) => {
   const { email, password } = req.body;
 
   if (email === dummyUser.email && password === dummyUser.password) {
