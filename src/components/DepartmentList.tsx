@@ -1,13 +1,30 @@
-import { useLocation } from "react-router-dom";
-// import { Button } from "./ui/button";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
+import Cookies from "js-cookie";
+import { OpenAPI } from "@/api/core/OpenAPI";
 
 const DepartmentList = () => {
   const { state } = useLocation();
+  const navigate = useNavigate();
   const departments = state?.departments?.data || [];
+
+  const handleLogout = () => {
+    Cookies.remove("accessToken");
+    Cookies.remove("refreshToken");
+
+    OpenAPI.TOKEN = undefined;
+
+    navigate("/");
+  };
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4 text-primary">Departments</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold text-primary">Departments</h2>
+        <Button onClick={handleLogout} variant="destructive">
+          Log Out
+        </Button>
+      </div>
       <ul className="space-y-4">
         {departments.map((dept) => (
           <li
@@ -24,7 +41,6 @@ const DepartmentList = () => {
           </li>
         ))}
       </ul>
-      {/* <Button>LogOut</Button> */}
     </div>
   );
 };

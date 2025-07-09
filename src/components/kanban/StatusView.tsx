@@ -71,7 +71,7 @@ export const StatusView = ({ lists, onDragEnd }: StatusViewProps) => {
   }, {} as Record<string, { card: Card; listId: string }[]>);
 
   return (
-    <div className="w-full h-full  p-4 md:p-6">
+    <div className="w-full h-full   p-4 md:p-6">
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4">
           {STATUS_COLUMNS.map((status) => {

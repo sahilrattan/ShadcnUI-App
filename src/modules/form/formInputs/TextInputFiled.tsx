@@ -10,7 +10,7 @@ const TextInputField: React.FC<FieldProps<InputProps>> = ({
   onChange,
   onFocus,
   errorMessage,
-  ...rest 
+  ...rest
 }) => {
   const { input, meta } = useField(name as string);
   const error = Boolean((meta.touched && meta.error) || meta.submitError);
@@ -41,19 +41,21 @@ const TextInputField: React.FC<FieldProps<InputProps>> = ({
 
   return (
     <div>
-     <Input
-  {...input}
-  {...rest}
-  isInvalid={error}
-  description={error ? meta.error || meta.submitError : undefined}
-  onChange={handleChange}
-  onFocus={handleFocus}
-  onBlur={handleBlur}
-  classNames={{
-    inputWrapper: "bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700",
-    input: "text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500",
-  }}
-/>
+      <Input
+        {...input}
+        {...rest}
+        isInvalid={error}
+        description={error ? meta.error || meta.submitError : undefined}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        classNames={{
+          inputWrapper:
+            " dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700",
+          input:
+            "text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500",
+        }}
+      />
 
       <p className="text-red-500">
         {error ? meta.error || meta.submitError : errorMessage}

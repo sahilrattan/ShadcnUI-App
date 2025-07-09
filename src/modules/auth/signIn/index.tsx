@@ -13,7 +13,8 @@ import Cookies from "js-cookie";
 import { AppServerService } from "@/api/services/AppServerService";
 import type { LoginRequest } from "@/api/models/LoginRequest";
 import type { AccessTokenResponse } from "@/api/models/AccessTokenResponse";
-import { DepartmentService } from "@/api/services/DepartmentService";
+// import { DepartmentService } from "@/api/services/DepartmentService";
+import { CitiesService } from "@/api/services/CitiesService";
 import { OpenAPI } from "@/api/core/OpenAPI";
 
 const SignInForm = () => {
@@ -49,12 +50,12 @@ const SignInForm = () => {
           }
 
           // Fetch department list
-          return DepartmentService.getApiVDepartment("1");
+          return CitiesService.getCityList("1");
         })
-        .then((departmentData) => {
+        .then((cityData) => {
           // Redirect with department data
-          navigate("/department-list", {
-            state: { departments: departmentData },
+          navigate("/cities", {
+            state: { city: cityData },
           });
         })
         .catch((error) => {

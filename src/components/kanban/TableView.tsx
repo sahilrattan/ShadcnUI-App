@@ -344,23 +344,34 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
             </div>
             {activeTasksExpanded && (
               <div>
-                <TableHeader />
-                <Droppable droppableId="active-tasks">
-                  {(provided) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps}>
-                      {activeTasks.length > 0 ? (
-                        activeTasks.map(({ card }, index) => (
-                          <TaskRow key={card.id} card={card} index={index} />
-                        ))
-                      ) : (
-                        <div className="px-4 py-6 text-sm text-gray-500 text-center">
-                          No active tasks
+                <div className="overflow-x-auto">
+                  <div className="min-w-[700px]">
+                    <TableHeader />
+                    <Droppable droppableId="active-tasks">
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                        >
+                          {activeTasks.length > 0 ? (
+                            activeTasks.map(({ card }, index) => (
+                              <TaskRow
+                                key={card.id}
+                                card={card}
+                                index={index}
+                              />
+                            ))
+                          ) : (
+                            <div className="px-4 py-6 text-sm text-gray-500 text-center">
+                              No active tasks
+                            </div>
+                          )}
+                          {provided.placeholder}
                         </div>
                       )}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
+                    </Droppable>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -381,23 +392,34 @@ const TableView: React.FC<Props> = ({ list, setList }) => {
             </div>
             {completedTasksExpanded && (
               <div>
-                <TableHeader />
-                <Droppable droppableId="completed-tasks">
-                  {(provided) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps}>
-                      {completedTasks.length > 0 ? (
-                        completedTasks.map(({ card }, index) => (
-                          <TaskRow key={card.id} card={card} index={index} />
-                        ))
-                      ) : (
-                        <div className="px-4 py-6 text-sm text-gray-500 text-center">
-                          No completed tasks
+                <div className="overflow-x-auto">
+                  <div className="min-w-[700px]">
+                    <TableHeader />
+                    <Droppable droppableId="completed-tasks">
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                        >
+                          {completedTasks.length > 0 ? (
+                            completedTasks.map(({ card }, index) => (
+                              <TaskRow
+                                key={card.id}
+                                card={card}
+                                index={index}
+                              />
+                            ))
+                          ) : (
+                            <div className="px-4 py-6 text-sm text-gray-500 text-center">
+                              No completed tasks
+                            </div>
+                          )}
+                          {provided.placeholder}
                         </div>
                       )}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
+                    </Droppable>
+                  </div>
+                </div>
               </div>
             )}
           </div>

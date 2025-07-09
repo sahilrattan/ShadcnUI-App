@@ -28,6 +28,7 @@ import TicketingSystem from "./components/TicketManagement";
 import ProfilePage from "./components/ProfilePage";
 import ChangePasswordForm from "./modules/auth/changePassword";
 import DepartmentList from "./components/DepartmentList";
+import CitiesPage from "./components/Cities";
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
@@ -95,6 +96,7 @@ export default function App() {
                     element={<ChangePasswordForm />}
                   />
                   <Route path="/department-list" element={<DepartmentList />} />
+                  <Route path="/cities" element={<CitiesPage />} />
                 </Routes>
               </div>
             </main>
