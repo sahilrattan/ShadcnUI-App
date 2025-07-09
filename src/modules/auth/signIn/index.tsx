@@ -16,6 +16,7 @@ import type { AccessTokenResponse } from "@/api/models/AccessTokenResponse";
 // import { DepartmentService } from "@/api/services/DepartmentService";
 import { CitiesService } from "@/api/services/CitiesService";
 import { OpenAPI } from "@/api/core/OpenAPI";
+import { encryptToken } from "@/utils/encryption"; // adjust path accordingly
 
 const SignInForm = () => {
   const navigate = useNavigate();
@@ -33,13 +34,15 @@ const SignInForm = () => {
         .then((response: AccessTokenResponse) => {
           const { accessToken, refreshToken } = response;
 
-          // Save tokens
-          Cookies.set("accessToken", accessToken ?? "", {
+          const encryptedAccessToken = encryptToken(accessToken ?? "");
+          const encryptedRefreshToken = encryptToken(refreshToken ?? "");
+
+          Cookies.set("accessToken", encryptedAccessToken, {
             expires: 1,
             secure: true,
             sameSite: "lax",
           });
-          Cookies.set("refreshToken", refreshToken ?? "", {
+          Cookies.set("refreshToken", encryptedRefreshToken, {
             expires: 7,
             secure: true,
             sameSite: "lax",
