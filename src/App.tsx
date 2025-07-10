@@ -31,7 +31,7 @@ import DepartmentList from "./components/DepartmentList";
 import CitiesPage from "./components/Cities";
 
 import { OpenAPI } from "@/api/core/OpenAPI";
-import { CustomOpenAPIConfig } from "@/api/custom/openAPIConfig";
+import { CustomOpenAPIConfig } from "@/api/custom/OpenAPIConfig";
 
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
