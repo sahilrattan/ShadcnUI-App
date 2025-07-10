@@ -20,7 +20,7 @@ export type OpenAPIConfig = {
 };
 
 export const OpenAPI: OpenAPIConfig = {
-  BASE: "https://dev2025-ajf0hucveba5fvax.centralindia-01.azurewebsites.net",
+  BASE: "",
   VERSION: "1",
   WITH_CREDENTIALS: false,
   CREDENTIALS: "include",

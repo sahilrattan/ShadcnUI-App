@@ -1,48 +1,28 @@
-import { useLocation, useNavigate } from "react-router-dom";
-import { Button } from "./ui/button";
-import Cookies from "js-cookie";
-import { OpenAPI } from "@/api/core/OpenAPI";
-
-const DepartmentList = () => {
-  const { state } = useLocation();
-  const navigate = useNavigate();
-  const departments = state?.departments?.data || [];
-
-  const handleLogout = () => {
-    Cookies.remove("accessToken");
-    Cookies.remove("refreshToken");
-
-    OpenAPI.TOKEN = undefined;
-
-    navigate("/");
-  };
-
+// src/pages/DepartmentList.tsx
+import { CrudList } from "@/components/CrudList";
+import { DepartmentService } from "@/api/services/DepartmentService";
+import type { CreateDepartmentCommand } from "@/api/models/CreateDepartmentCommand";
+import type { UpdateDepartmentCommand } from "@/api/models/UpdateDepartmentCommand";
+export default function DepartmentList() {
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-primary">Departments</h2>
-        <Button onClick={handleLogout} variant="destructive">
-          Log Out
-        </Button>
-      </div>
-      <ul className="space-y-4">
-        {departments.map((dept) => (
-          <li
-            key={dept.departmentID}
-            className="p-4 rounded-lg border shadow-md bg-white text-black"
-          >
-            <h3 className="text-lg font-semibold">{dept.name}</h3>
-            <p className="text-sm text-gray-700">{dept.description}</p>
-            <p className="text-sm text-gray-500">Email: {dept.email}</p>
-            <p className="text-sm text-gray-400">
-              Created by: {dept.createdBy} on{" "}
-              {new Date(dept.createdDate).toLocaleDateString()}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <CrudList<
+      CreateDepartmentCommand,
+      UpdateDepartmentCommand,
+      DepartmentService
+    >
+      config={{
+        title: "Departments",
+        fields: [
+          { name: "name", label: "Name", type: "text", required: true },
+          { name: "description", label: "Description", type: "textarea" },
+          { name: "email", label: "Email", type: "email" },
+        ],
+        getList: () =>
+          DepartmentService.getApiVDepartment("1.0").then((r) => r.data ?? []),
+        create: (d) => DepartmentService.postApiVDepartment("1.0", d),
+        update: (d) => DepartmentService.putApiVDepartment("1.0", d),
+        delete: (id) => DepartmentService.deleteApiVDepartment(id, "1.0"),
+      }}
+    />
   );
-};
-
-export default DepartmentList;
+}

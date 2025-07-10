@@ -9,14 +9,14 @@ import PasswordInput from "@/modules/form/formInputs/PasswordField";
 import { Button } from "@/components/ui/button";
 import SignInValidationSchema from "./validationSchema";
 import { i18n } from "@lingui/core";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
 import { AppServerService } from "@/api/services/AppServerService";
 import type { LoginRequest } from "@/api/models/LoginRequest";
 import type { AccessTokenResponse } from "@/api/models/AccessTokenResponse";
-// import { DepartmentService } from "@/api/services/DepartmentService";
 import { CitiesService } from "@/api/services/CitiesService";
 import { OpenAPI } from "@/api/core/OpenAPI";
-import { encryptToken } from "@/utils/encryption"; // adjust path accordingly
+import { storeTokens } from "@/utils/authToken";
+import { DepartmentService } from "@/api/services/DepartmentService";
 
 const SignInForm = () => {
   const navigate = useNavigate();
@@ -34,31 +34,17 @@ const SignInForm = () => {
         .then((response: AccessTokenResponse) => {
           const { accessToken, refreshToken } = response;
 
-          const encryptedAccessToken = encryptToken(accessToken ?? "");
-          const encryptedRefreshToken = encryptToken(refreshToken ?? "");
-
-          Cookies.set("accessToken", encryptedAccessToken, {
-            expires: 1,
-            secure: true,
-            sameSite: "lax",
-          });
-          Cookies.set("refreshToken", encryptedRefreshToken, {
-            expires: 7,
-            secure: true,
-            sameSite: "lax",
-          });
+          storeTokens(accessToken ?? "", refreshToken ?? "");
 
           if (accessToken) {
             OpenAPI.TOKEN = accessToken;
           }
 
-          // Fetch department list
           return CitiesService.getCityList("1");
         })
-        .then((cityData) => {
-          // Redirect with department data
+        .then((citiesData) => {
           navigate("/cities", {
-            state: { city: cityData },
+            state: { cities: citiesData },
           });
         })
         .catch((error) => {
@@ -86,7 +72,7 @@ const SignInForm = () => {
       {(formProps) => (
         <div className="w-full max-w-md mx-auto mt-10 px-6 py-8 rounded-xl dark:bg-zinc-900 space-y-6 bg-[var(--color-card)] text-[var(--color-card-foreground)] border border-[var(--color-border)] shadow-md">
           <div className="text-center">
-            <h2 className="text-2xl font-semibold   text-primary">
+            <h2 className="text-2xl font-semibold text-primary">
               {i18n.t({ id: "ui.Sign In", message: "Sign In" })}
             </h2>
           </div>
@@ -126,7 +112,7 @@ const SignInForm = () => {
           <div>
             <button
               onClick={handleChangePassword}
-              className="text-primary  cursor-pointer justify-end underline"
+              className="text-primary cursor-pointer justify-end underline"
               type="button"
             >
               {i18n.t({
@@ -137,7 +123,7 @@ const SignInForm = () => {
           </div>
 
           <div>
-            <Button type="submit" className=" cursor-pointer w-full">
+            <Button type="submit" className="cursor-pointer w-full">
               {formProps.submitting ? (
                 <Trans id="Signing In..." />
               ) : (

@@ -29,6 +29,10 @@ import ProfilePage from "./components/ProfilePage";
 import ChangePasswordForm from "./modules/auth/changePassword";
 import DepartmentList from "./components/DepartmentList";
 import CitiesPage from "./components/Cities";
+
+import { OpenAPI } from "@/api/core/OpenAPI";
+import { CustomOpenAPIConfig } from "@/api/custom/openAPIConfig";
+
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
@@ -53,6 +57,13 @@ export default function App() {
         i18n.load("en", fallback.messages || fallback.default);
         i18n.activate("en");
       } finally {
+        // 👇 Setup OpenAPI config after language loads
+        OpenAPI.BASE = CustomOpenAPIConfig.BASE;
+        OpenAPI.VERSION = CustomOpenAPIConfig.VERSION;
+        OpenAPI.CREDENTIALS = CustomOpenAPIConfig.CREDENTIALS;
+        OpenAPI.WITH_CREDENTIALS = CustomOpenAPIConfig.WITH_CREDENTIALS;
+        OpenAPI.TOKEN = CustomOpenAPIConfig.TOKEN;
+
         setIsLocaleReady(true);
       }
     };
