@@ -13,11 +13,12 @@ import { i18n } from "@lingui/core";
 import { AppServerService } from "@/api/services/AppServerService";
 import type { LoginRequest } from "@/api/models/LoginRequest";
 import type { AccessTokenResponse } from "@/api/models/AccessTokenResponse";
-import { CitiesService } from "@/api/services/CitiesService";
+// import { CitiesService } from "@/api/services/CitiesService";
 import { OpenAPI } from "@/api/core/OpenAPI";
 import { storeTokens } from "@/utils/authToken";
-import { DepartmentService } from "@/api/services/DepartmentService";
-
+// import { DepartmentService } from "@/api/services/DepartmentService";
+import { CustomOpenAPIConfig } from "@/api/custom/OpenAPIConfig";
+import { SopService } from "@/api/services/SopService";
 const SignInForm = () => {
   const navigate = useNavigate();
 
@@ -36,15 +37,13 @@ const SignInForm = () => {
 
           storeTokens(accessToken ?? "", refreshToken ?? "");
 
-          if (accessToken) {
-            OpenAPI.TOKEN = accessToken;
-          }
+          OpenAPI.TOKEN = CustomOpenAPIConfig.TOKEN;
 
-          return CitiesService.getCityList("1");
+          return SopService.getApiVSop("1");
         })
-        .then((citiesData) => {
-          navigate("/cities", {
-            state: { cities: citiesData },
+        .then((sopData) => {
+          navigate("/sop-list", {
+            state: { sop: sopData },
           });
         })
         .catch((error) => {

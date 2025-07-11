@@ -2,29 +2,29 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { CreateCityCommand } from '../models/CreateCityCommand';
-import type { CreateCityCommandResponse } from '../models/CreateCityCommandResponse';
-import type { DeleteCityCommandResponse } from '../models/DeleteCityCommandResponse';
-import type { GetCityDetailQueryResponse } from '../models/GetCityDetailQueryResponse';
-import type { GetCityListQueryResponse } from '../models/GetCityListQueryResponse';
+import type { CreateSopCommand } from '../models/CreateSopCommand';
+import type { CreateSopCommandResponse } from '../models/CreateSopCommandResponse';
+import type { DeleteSopCommandResponse } from '../models/DeleteSopCommandResponse';
+import type { GetSopDetailQueryResponse } from '../models/GetSopDetailQueryResponse';
+import type { GetSopListQueryResponse } from '../models/GetSopListQueryResponse';
 import type { ProblemDetails } from '../models/ProblemDetails';
-import type { UpdateCityCommand } from '../models/UpdateCityCommand';
-import type { UpdateCityCommandResponse } from '../models/UpdateCityCommandResponse';
+import type { UpdateSopCommand } from '../models/UpdateSopCommand';
+import type { UpdateSopCommandResponse } from '../models/UpdateSopCommandResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
-export class CitiesService {
+export class SopService {
     /**
      * @param version
-     * @returns GetCityListQueryResponse Success
+     * @returns GetSopListQueryResponse OK
      * @throws ApiError
      */
-    public static getCityList(
+    public static getApiVSop(
         version: string,
-    ): CancelablePromise<GetCityListQueryResponse> {
+    ): CancelablePromise<GetSopListQueryResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v{version}/cities',
+            url: '/api/v{version}/Sop',
             path: {
                 'version': version,
             },
@@ -33,16 +33,16 @@ export class CitiesService {
     /**
      * @param version
      * @param requestBody
-     * @returns CreateCityCommandResponse Success
+     * @returns CreateSopCommandResponse OK
      * @throws ApiError
      */
-    public static postApiVCities(
+    public static postApiVSop(
         version: string,
-        requestBody?: CreateCityCommand,
-    ): CancelablePromise<CreateCityCommandResponse> {
+        requestBody?: CreateSopCommand,
+    ): CancelablePromise<CreateSopCommandResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v{version}/cities',
+            url: '/api/v{version}/Sop',
             path: {
                 'version': version,
             },
@@ -56,16 +56,16 @@ export class CitiesService {
     /**
      * @param version
      * @param requestBody
-     * @returns UpdateCityCommandResponse Success
+     * @returns UpdateSopCommandResponse OK
      * @throws ApiError
      */
-    public static putApiVCities(
+    public static putApiVSop(
         version: string,
-        requestBody?: UpdateCityCommand,
-    ): CancelablePromise<UpdateCityCommandResponse> {
+        requestBody?: UpdateSopCommand,
+    ): CancelablePromise<UpdateSopCommandResponse> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v{version}/cities',
+            url: '/api/v{version}/Sop',
             path: {
                 'version': version,
             },
@@ -73,22 +73,42 @@ export class CitiesService {
             mediaType: 'application/json',
             errors: {
                 400: `Bad Request`,
+            },
+        });
+    }
+    /**
+     * @param version
+     * @returns GetSopListQueryResponse OK
+     * @throws ApiError
+     */
+    public static getMySopList(
+        version: string,
+    ): CancelablePromise<GetSopListQueryResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v{version}/Sop/GetMySopList',
+            path: {
+                'version': version,
+            },
+            errors: {
+                400: `Bad Request`,
+                404: `Not Found`,
             },
         });
     }
     /**
      * @param id
      * @param version
-     * @returns GetCityDetailQueryResponse Success
+     * @returns GetSopDetailQueryResponse OK
      * @throws ApiError
      */
-    public static getByCityId(
+    public static getSopById(
         id: string,
         version: string,
-    ): CancelablePromise<GetCityDetailQueryResponse> {
+    ): CancelablePromise<GetSopDetailQueryResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v{version}/cities/{id}',
+            url: '/api/v{version}/Sop/{id}',
             path: {
                 'id': id,
                 'version': version,
@@ -101,17 +121,17 @@ export class CitiesService {
     /**
      * @param id
      * @param version
-     * @returns DeleteCityCommandResponse Success
+     * @returns DeleteSopCommandResponse OK
      * @returns ProblemDetails Error
      * @throws ApiError
      */
-    public static deleteCity(
+    public static deleteSop(
         id: string,
         version: string,
-    ): CancelablePromise<DeleteCityCommandResponse | ProblemDetails> {
+    ): CancelablePromise<DeleteSopCommandResponse | ProblemDetails> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v{version}/cities/{id}',
+            url: '/api/v{version}/Sop/{id}',
             path: {
                 'id': id,
                 'version': version,

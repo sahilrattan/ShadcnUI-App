@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Department } from './Department';
-export type DepartmentListResponse = {
-    data?: Array<Department>;
+export type CreateDepartmentCommandResponse = {
+    departmentID?: string;
+    message?: string;
 };
 

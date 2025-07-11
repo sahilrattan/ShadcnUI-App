@@ -180,7 +180,7 @@ export function CrudList<TCreate, TUpdate, TItem>({
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <CrudDialog<TUpdate | TCreate>
-                              title={`Edit ${config.title.slice(0, -1)}`}
+                              title={`Edit ${config.title}`}
                               triggerLabel="Edit"
                               fields={config.fields}
                               initialValues={item}
@@ -193,7 +193,7 @@ export function CrudList<TCreate, TUpdate, TItem>({
                               variant="outline"
                               onClick={() => handleDelete(item)}
                               disabled={isDeleting === id}
-                              className="hover:text-red-700 hover:border-red-300 transition-all"
+                              className="hover:text-red-700 cursor-pointer hover:border-red-300 transition-all"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>

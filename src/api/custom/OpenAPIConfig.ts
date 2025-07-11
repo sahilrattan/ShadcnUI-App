@@ -1,50 +1,89 @@
+/* ─── src/api/custom/OpenAPIConfig.ts ────────────────────────────────── */
+
 import Cookies from "js-cookie";
 import { decryptToken } from "@/utils/encryption";
-import { AppServerService } from "../services/AppServerService";
 import { storeTokens } from "@/utils/authToken";
 
+/* --------------------------------------------------------------------- */
+/* Configuration constants — adjust BASE / VERSION if needed             */
+/* --------------------------------------------------------------------- */
+const BASE =
+  "https://dev2025-ajf0hucveba5fvax.centralindia-01.azurewebsites.net";
+const VERSION = "1";
+
+/* Shared single‑flight promise so we don’t spam the refresh endpoint */
+let refreshingPromise: Promise<string> | null = null;
+
+/* --------------------------------------------------------------------- */
+/* Helper – decode JWT payload safely                                    */
+/* --------------------------------------------------------------------- */
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1] ?? ""));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    // If malformed, treat as expired
+    return true;
+  }
+}
+
+/* --------------------------------------------------------------------- */
+/* The OpenAPI config object                                             */
+/* --------------------------------------------------------------------- */
 export const CustomOpenAPIConfig = {
-  BASE: "https://dev2025-ajf0hucveba5fvax.centralindia-01.azurewebsites.net",
-  VERSION: "1",
+  BASE,
+  VERSION,
   WITH_CREDENTIALS: false,
   CREDENTIALS: "include",
 
+  /* TOKEN must be an async function that returns a *fresh* access token */
   TOKEN: async (): Promise<string> => {
-    const encryptedAccessToken = Cookies.get("accessToken");
-    const encryptedRefreshToken = Cookies.get("refreshToken");
+    const encAccess = Cookies.get("accessToken");
+    const encRefresh = Cookies.get("refreshToken");
 
-    if (!encryptedAccessToken || !encryptedRefreshToken) return "";
+    /* No cookies → user is not authenticated */
+    if (!encAccess || !encRefresh) return "";
 
-    const accessToken = decryptToken(encryptedAccessToken);
+    const accessToken = decryptToken(encAccess);
+    const refreshToken = decryptToken(encRefresh);
 
-    let isExpired = true;
-    try {
-      const payload = JSON.parse(atob(accessToken.split(".")[1]));
-      isExpired = payload.exp * 1000 < Date.now();
-    } catch (e) {
-      console.warn("Malformed token:", e);
+    /* If access token is still valid, just return it */
+    if (!isTokenExpired(accessToken)) return accessToken;
+
+    /* ----------------------------------------------------------------- */
+    /* Access token expired → need to refresh                            */
+    /* Use single‑flight so parallel calls share one refresh request     */
+    /* ----------------------------------------------------------------- */
+    if (!refreshingPromise) {
+      refreshingPromise = (async () => {
+        try {
+          const res = await fetch(`${BASE}/api/v${VERSION}/identity/refresh`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+          const data: { accessToken: string; refreshToken: string } =
+            await res.json();
+
+          /* Store new tokens in cookies (encrypted) */
+          storeTokens(data.accessToken, data.refreshToken);
+
+          return data.accessToken;
+        } catch (err) {
+          /* Hard fail → clear cookies so app forces re‑login */
+          console.error("Token refresh failed:", err);
+          Cookies.remove("accessToken");
+          Cookies.remove("refreshToken");
+          return "";
+        } finally {
+          refreshingPromise = null; // reset for next expiry
+        }
+      })();
     }
 
-    if (!isExpired) return accessToken;
-
-    try {
-      const refreshToken = decryptToken(encryptedRefreshToken);
-      const res = await AppServerService.postApiVIdentityRefresh({
-        refreshToken,
-      });
-
-      const newAccessToken = res.accessToken!;
-      const newRefreshToken = res.refreshToken!;
-
-      storeTokens(newAccessToken, newRefreshToken);
-
-      return newAccessToken;
-    } catch (err) {
-      //
-      console.error("Token refresh failed", err);
-      Cookies.remove("accessToken");
-      Cookies.remove("refreshToken");
-      return "";
-    }
+    return refreshingPromise;
   },
 };

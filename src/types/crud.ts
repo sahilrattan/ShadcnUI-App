@@ -6,6 +6,7 @@ export interface FieldConfig {
 }
 
 export interface CrudConfig<TCreate, TUpdate, TList> {
+  //
   title: string;
   fields: FieldConfig[];
   getList: () => Promise<TList[]>;

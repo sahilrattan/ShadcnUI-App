@@ -2,12 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type Department = {
+import type { CreateDepartmentCommand } from './CreateDepartmentCommand';
+export type UpdateDepartmentCommand = (CreateDepartmentCommand & {
     departmentID: string;
-    name: string;
-    description?: string;
-    email?: string;
-    createdBy?: string;
-    createdDate?: string;
-};
+});
 

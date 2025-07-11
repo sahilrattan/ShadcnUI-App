@@ -27,11 +27,12 @@ import { PushManager } from "./components/PushManager";
 import TicketingSystem from "./components/TicketManagement";
 import ProfilePage from "./components/ProfilePage";
 import ChangePasswordForm from "./modules/auth/changePassword";
-import DepartmentList from "./components/DepartmentList";
+// import DepartmentList from "./components/DepartmentList";
 import CitiesPage from "./components/Cities";
 
 import { OpenAPI } from "@/api/core/OpenAPI";
 import { CustomOpenAPIConfig } from "@/api/custom/OpenAPIConfig";
+import SopPage from "./components/Sop";
 
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
@@ -60,9 +61,9 @@ export default function App() {
         // 👇 Setup OpenAPI config after language loads
         OpenAPI.BASE = CustomOpenAPIConfig.BASE;
         OpenAPI.VERSION = CustomOpenAPIConfig.VERSION;
-        OpenAPI.CREDENTIALS = CustomOpenAPIConfig.CREDENTIALS;
-        OpenAPI.WITH_CREDENTIALS = CustomOpenAPIConfig.WITH_CREDENTIALS;
         OpenAPI.TOKEN = CustomOpenAPIConfig.TOKEN;
+        OpenAPI.WITH_CREDENTIALS = CustomOpenAPIConfig.WITH_CREDENTIALS;
+        OpenAPI.CREDENTIALS = CustomOpenAPIConfig.CREDENTIALS;
 
         setIsLocaleReady(true);
       }
@@ -106,8 +107,9 @@ export default function App() {
                     path="/change-password"
                     element={<ChangePasswordForm />}
                   />
-                  <Route path="/department-list" element={<DepartmentList />} />
+                  {/* <Route path="/department-list" element={<DepartmentList />} /> */}
                   <Route path="/cities" element={<CitiesPage />} />
+                  <Route path="/sop-list" element={<SopPage />} />
                 </Routes>
               </div>
             </main>

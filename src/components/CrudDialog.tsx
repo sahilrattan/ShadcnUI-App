@@ -64,8 +64,8 @@ export function CrudDialog<T>({
           size={variant === "add" ? "default" : "sm"}
           className={
             variant === "add"
-              ? "bg-primary shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-              : "hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200"
+              ? "bg-primary shadow-lg hover:shadow-xl cursor-pointer transition-all duration-200 transform hover:scale-105"
+              : "hover:bg-blue-50 hover:text-blue-700 cursor-pointer hover:border-blue-300 transition-all duration-200"
           }
         >
           <TriggerIcon className="w-4 h-4 mr-2" />
@@ -123,14 +123,14 @@ export function CrudDialog<T>({
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
-              className="flex-1 hover:bg-slate-50 transition-colors"
+              className="flex-1 hover:bg-slate-50 cursor-pointer transition-colors"
               disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-primary from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+              className="flex-1 bg-primary from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl cursor-pointer  transition-all duration-200 transform hover:scale-[1.02]"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Saving..." : "Save"}
