@@ -62,13 +62,20 @@ export function FilePreviewDialog({
     if (mimeType === "application/pdf") {
       return (
         <div className="w-full h-[80vh]">
-          <iframe
+          <embed
+            src={fileUrl}
+            height="100%"
+            width="100%"
+            style={{ border: "none" }}
+            title="PDF Preview"
+          />
+          {/* <iframe
             src={fileUrl}
             width="100%"
             height="100%"
             style={{ border: "none" }}
             title="PDF Preview"
-          />
+          /> */}
         </div>
       );
     }
