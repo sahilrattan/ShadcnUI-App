@@ -6,7 +6,9 @@ export type DocumentUrlListVM = {
   documentID?: string | null;
   name?: string | null;
   description?: string | null;
-  url?: string | null;
+  blobUrl?: string | null;
   category?: string | null;
   createdDate?: string;
+  categoryID?: string;
+  url?: string | null;
 };

@@ -3,11 +3,10 @@
 /* tslint:disable */
 /* eslint-disable */
 export type UpdateDocumentUrlCommand = {
-    documentID?: string | null;
-    title?: string | null;
-    description?: string | null;
-    url?: string | null;
-    category?: string | null;
-    categoryId?: string | null;
+  documentID?: string | null;
+  title?: string | null;
+  description?: string | null;
+  url?: string | null;
+  category?: string | null;
+  categoryId?: string | null;
 };
-

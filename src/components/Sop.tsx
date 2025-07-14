@@ -33,26 +33,50 @@ import {
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Edit, Trash2, AlertCircle } from "lucide-react";
-/* Shadcn Select */
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
-
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  FileText,
+  Plus,
+  Edit,
+  Trash2,
+  AlertCircle,
+  Download,
+  Upload,
+  Building2,
+  Calendar,
+  CheckCircle2,
+  ChevronDown,
+  Check,
+} from "lucide-react";
+import { cn } from "@/utils/cn";
 import type { SopListVM } from "@/api/models/SopListVM";
 import type { Department } from "@/api/models/Department";
 import type { CreateDocumentUrlCommand } from "@/api/models/CreateDocumentUrlCommand";
+import type { DocumentUrlListVM } from "@/api/models/DocumentUrlListVM";
 
-/*──────────────────────────────────────────────────────────────────────────*/
+import { getFileIcon, getFileExtension, getMimeType } from "@/utils/file-utils";
+import { FilePreviewDialog } from "@/components/FilePreview";
 
-export default function SopPageFixed() {
-  /* ───────── state ───────── */
+export default function SopPageEnhanced() {
   const [sops, setSops] = useState<SopListVM[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [filteredDepartments, setFilteredDepartments] = useState<Department[]>(
+    []
+  );
   const [error, setError] = useState("");
   const [editingSop, setEditingSop] = useState<SopListVM | null>(null);
   const [formState, setFormState] = useState({
@@ -65,146 +89,215 @@ export default function SopPageFixed() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [existingDocuments, setExistingDocuments] = useState<
+    Record<string, DocumentUrlListVM[]>
+  >({});
+  const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
+  const [editDepartmentSearchOpen, setEditDepartmentSearchOpen] =
+    useState(false);
 
-  /* ───────── fetch data ───────── */
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [previewDocument, setPreviewDocument] =
+    useState<DocumentUrlListVM | null>(null);
+
   useEffect(() => {
     fetchSops();
     DepartmentService.getApiVDepartment("1.0")
-      .then((res) => setDepartments(res.data ?? []))
+      .then((res) => {
+        const depts = res.data ?? [];
+        setDepartments(depts);
+        setFilteredDepartments(depts.slice(0, 10));
+      })
       .catch(() => setError("Could not load departments list."));
   }, []);
 
   const fetchSops = () => {
     setIsLoading(true);
     SopService.getApiVSop("1")
-      .then((res) => setSops((res.data as any)?.data ?? res.data ?? []))
+      .then((res) => {
+        const sopsData = (res.data as any)?.data ?? res.data ?? [];
+        setSops(sopsData);
+        const documentPromises = sopsData.map((sop: SopListVM) =>
+          DocumentsService.getApiVDocuments("1", "Sop", sop.sopId)
+            .then((docRes) => ({
+              sopId: sop.sopId,
+              documents: docRes.data ?? [],
+            }))
+            .catch(() => ({
+              sopId: sop.sopId,
+              documents: [],
+            }))
+        );
+        Promise.all(documentPromises).then((results) => {
+          const docsMap = results.reduce((acc, { sopId, documents }) => {
+            acc[sopId] = documents;
+            return acc;
+          }, {} as Record<string, DocumentUrlListVM[]>);
+          setExistingDocuments(docsMap);
+        });
+      })
       .catch(() => setError("Error loading SOPs. Please try again."))
       .finally(() => setIsLoading(false));
   };
 
-  /* ───────── helpers ───────── */
   const resetForm = () => {
     setFormState({ name: "", description: "", departmentId: "", file: null });
     setFileBase64("");
+    setUploadProgress(0);
+    setIsUploading(false);
   };
 
-  // Helper function to get file extension WITH the dot
-  const getFileExtension = (fileName: string): string => {
-    const lastDotIndex = fileName.lastIndexOf(".");
-    if (lastDotIndex === -1) return ""; // No extension found
-    return fileName.substring(lastDotIndex); // Returns ".pdf", ".docx", etc.
-  };
-
-  // Helper function to get file extension WITHOUT the dot (for API)
-  const getFileExtensionWithoutDot = (fileName: string): string => {
-    const extension = getFileExtension(fileName);
-    return extension.startsWith(".") ? extension.substring(1) : extension;
-  };
-
-  // Helper function to get MIME type
-  const getMimeType = (fileName: string): string => {
-    const extension = getFileExtensionWithoutDot(fileName).toLowerCase();
-    const mimeTypes: Record<string, string> = {
-      pdf: "application/.pdf",
-      doc: "application/msword",
-      docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      txt: "text/plain",
-      jpg: "image/jpeg",
-      jpeg: "image/jpeg",
-      png: "image/png",
-      gif: "image/gif",
-      xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      xls: "application/vnd.ms-excel",
-      ppt: "application/vnd.ms-powerpoint",
-      pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    };
-    return mimeTypes[extension] || "application/octet-stream";
-  };
-
-  /* select component */
-  const DepartmentSelect = ({
+  const DepartmentCombobox = ({
     value,
     onChange,
+    open,
+    setOpen,
+    placeholder = "Select department...",
   }: {
     value: string;
     onChange: (val: string) => void;
-  }) => (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full h-10">
-        <SelectValue placeholder="Select department…" className="truncate" />
-      </SelectTrigger>
-      <SelectContent>
-        {departments.map((d) => (
-          <SelectItem key={d.departmentID} value={d.departmentID}>
-            <span className="truncate">{d.name}</span>
-            <span className="ml-1 text-muted-foreground text-xs">
-              ({d.departmentID.slice(0, 15)}…)
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
+    open: boolean;
+    setOpen: (open: boolean) => void;
+    placeholder?: string;
+  }) => {
+    const selectedDepartment = departments.find(
+      (d) => d.departmentID === value
+    );
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between h-10 bg-transparent"
+          >
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="truncate">
+                {selectedDepartment ? selectedDepartment.name : placeholder}
+              </span>
+            </div>
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Search departments..." className="h-9" />
+            <CommandList>
+              <CommandEmpty>No department found.</CommandEmpty>
+              <CommandGroup>
+                {filteredDepartments.map((dept) => (
+                  <CommandItem
+                    key={dept.departmentID}
+                    value={dept.name}
+                    onSelect={() => {
+                      onChange(dept.departmentID);
+                      setOpen(false);
+                    }}
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        <div className="font-medium">{dept.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          ID: {dept.departmentID.slice(0, 20)}...
+                        </div>
+                      </div>
+                    </div>
+                    <Check
+                      className={cn(
+                        "ml-auto h-4 w-4",
+                        value === dept.departmentID
+                          ? "opacity-100"
+                          : "opacity-0"
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    );
+  };
 
-  /* convert file to base‑64 when chosen */
-  const handleFileChange = (file: File | null) => {
+  const handleFileChange = async (file: File | null) => {
     setFormState((p) => ({ ...p, file }));
     if (!file) {
       setFileBase64("");
+      setUploadProgress(0);
+      setIsUploading(false);
       return;
     }
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    // Simulate file reading/conversion progress
     const reader = new FileReader();
-    reader.onload = () =>
+    reader.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percent);
+      }
+    };
+    reader.onload = () => {
       setFileBase64(reader.result?.toString().split(",")[1] || "");
+      setUploadProgress(100); // Mark 100% for file reading
+      setTimeout(() => {
+        setIsUploading(false); // Indicate file reading/conversion is done
+      }, 500);
+    };
+    reader.onerror = () => {
+      setError("Failed to read file.");
+      setIsUploading(false);
+      setUploadProgress(0);
+    };
     reader.readAsDataURL(file);
   };
 
   const handleCreate = async () => {
     const { name, description, departmentId, file } = formState;
     if (!name.trim() || !description.trim() || !departmentId) return;
-
     try {
+      // If a file is being uploaded, wait for it to be processed (base64 conversion)
+      if (file && isUploading) {
+        setError("Please wait for the file to finish processing.");
+        return;
+      }
+
       const sopRes = await SopService.postApiVSop("1", {
-        name: name, // Changed from 'name' to 'title' to match API
+        name,
         description,
         departmentId,
       });
-
-      // Try different possible response structures
       const sopId =
         sopRes.data?.sopId ||
         sopRes.data?.data?.sopId ||
         sopRes.data?.data?.sopID;
-
-      console.log("SOP Response:", sopRes.data); // Debug log
-      console.log("Extracted SOP ID:", sopId); // Debug log
-
-      /* 2. if file chosen, upload */
       if (file && fileBase64 && sopId) {
+        const ext = getFileExtension(file.name);
+        const extension = ext.startsWith(".") ? ext : `.${ext}`;
         const docCmd: CreateDocumentUrlCommand = {
-          name: file.name, // Use filename as title
+          name: file.name,
           description: `Document for ${name}`,
-          url: fileBase64, // Some APIs expect 'url' field for content
-          content: fileBase64,
-          contentType: getMimeType(file.name), // Use helper function
-          extension: getFileExtensionWithoutDot(file.name), // WITHOUT dot for API
-          documentFileName: file.name,
+          content: fileBase64, // Using 'content' for base64 data
           category: "Sop",
           categoryId: sopId,
-          fileSizeBytes: file.size,
-          documentDate: new Date().toISOString(),
+          extension: extension,
+          contentType: file.type,
+          documentFileName: file.name,
         };
-
-        console.log("Document Command:", docCmd); // Debug log
-
         await DocumentsService.postApiVDocuments("1", docCmd);
       }
-
       resetForm();
       setIsCreateDialogOpen(false);
       fetchSops();
     } catch (error) {
-      console.error("Create error:", error); // Debug log
+      console.error("Create error:", error);
       setError("Failed to create SOP or upload document.");
     }
   };
@@ -218,6 +311,8 @@ export default function SopPageFixed() {
       file: null,
     });
     setFileBase64("");
+    setUploadProgress(0);
+    setIsUploading(false);
     setIsEditDialogOpen(true);
   };
 
@@ -225,40 +320,40 @@ export default function SopPageFixed() {
     if (!editingSop) return;
     const { name, description, departmentId, file } = formState;
     if (!name.trim() || !description.trim() || !departmentId) return;
-
     try {
+      // If a file is being uploaded, wait for it to be processed (base64 conversion)
+      if (file && isUploading) {
+        setError("Please wait for the file to finish processing.");
+        return;
+      }
+
       await SopService.putApiVSop("1", {
         sopId: editingSop.sopId,
-        name: name, // Changed from 'name' to 'title' to match API
+        name,
         description,
         departmentId,
       });
-
-      /* optional: upload replacement file when editing */
-      if (file && fileBase64) {
+      if (file && fileBase64 && editingSop.sopId) {
+        const ext = getFileExtension(file.name);
+        const extension = ext.startsWith(".") ? ext : `.${ext}`;
         const docCmd: CreateDocumentUrlCommand = {
           name: file.name,
-          description: `Updated document for ${name}`,
-          url: fileBase64,
-          content: fileBase64,
-          contentType: getMimeType(file.name),
-          extension: getFileExtensionWithoutDot(file.name), // WITHOUT dot for API
-          documentFileName: file.name,
+          description: `Document for ${name}`,
+          content: fileBase64, // Changed from 'url' to 'content' for consistency
           category: "Sop",
           categoryId: editingSop.sopId,
-          fileSizeBytes: file.size,
-          documentDate: new Date().toISOString(),
+          extension: extension, // Added for consistency
+          contentType: file.type, // Added for consistency
+          documentFileName: file.name, // Added for consistency
         };
-
         await DocumentsService.postApiVDocuments("1", docCmd);
       }
-
       setEditingSop(null);
       resetForm();
       setIsEditDialogOpen(false);
       fetchSops();
     } catch (error) {
-      console.error("Update error:", error); // Debug log
+      console.error("Update error:", error);
       setError("Failed to update SOP or upload document.");
     }
   };
@@ -274,290 +369,555 @@ export default function SopPageFixed() {
     resetForm();
     setIsCreateDialogOpen(false);
     setIsEditDialogOpen(false);
+    setDepartmentSearchOpen(false);
+    setEditDepartmentSearchOpen(false);
+    setIsPreviewDialogOpen(false);
+    setPreviewDocument(null);
   };
 
-  // Format file size for display
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return (
-      Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+    return Number.parseFloat(
+      (bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i]
     );
   };
 
-  /* ───────── render ───────── */
+  const handleDownload = async (doc: DocumentUrlListVM) => {
+    try {
+      if (!doc.categoryID || !doc.name || !doc.blobUrl) {
+        console.warn("Missing document metadata for download");
+        return;
+      }
+      const link = document.createElement("a");
+      link.href = doc.blobUrl;
+      link.download = doc.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Download error", error);
+    }
+  };
+
+  const handlePreview = (doc: DocumentUrlListVM) => {
+    setPreviewDocument(doc);
+    setIsPreviewDialogOpen(true);
+  };
+
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-6xl">
-      {/* header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2">
-          <FileText className="h-6 w-6 text-primary" />
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-              SOP Management
-            </h1>
-            <p className="text-muted-foreground">
-              Manage Standard Operating Procedures
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-7xl">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <FileText className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                SOP Management
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                Manage Standard Operating Procedures with ease
+              </p>
+            </div>
           </div>
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Add New SOP
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader className="space-y-3">
+                <DialogTitle className="text-2xl font-semibold flex items-center gap-2">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Plus className="h-5 w-5 text-blue-600" />
+                  </div>
+                  Create New SOP
+                </DialogTitle>
+                <DialogDescription className="text-base">
+                  Fill in the details below to create a new Standard Operating
+                  Procedure.
+                </DialogDescription>
+              </DialogHeader>
+              <Separator />
+              <div className="grid gap-6 py-4">
+                <div className="grid gap-3">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    SOP Title
+                  </Label>
+                  <Input
+                    placeholder="Enter SOP title..."
+                    value={formState.name}
+                    onChange={(e) =>
+                      setFormState({ ...formState, name: e.target.value })
+                    }
+                    className="h-11"
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Edit className="h-4 w-4" />
+                    Description
+                  </Label>
+                  <Input
+                    placeholder="Enter description..."
+                    value={formState.description}
+                    onChange={(e) =>
+                      setFormState({
+                        ...formState,
+                        description: e.target.value,
+                      })
+                    }
+                    className="h-11"
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Department
+                  </Label>
+                  <DepartmentCombobox
+                    value={formState.departmentId}
+                    onChange={(val) =>
+                      setFormState({ ...formState, departmentId: val })
+                    }
+                    open={departmentSearchOpen}
+                    setOpen={setDepartmentSearchOpen}
+                    placeholder="Search and select department..."
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Attach File (optional)
+                  </Label>
+                  <div className="space-y-3">
+                    <Input
+                      type="file"
+                      onChange={(e) =>
+                        handleFileChange(e.target.files?.[0] ?? null)
+                      }
+                      accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.ppt,.pptx"
+                      className="h-11"
+                      disabled={isUploading}
+                    />
+                    {isUploading && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {uploadProgress < 100
+                              ? "Reading file..."
+                              : "Processing file..."}
+                          </span>
+                          <span className="font-medium">{uploadProgress}%</span>
+                        </div>
+                        <Progress value={uploadProgress} className="h-2" />
+                      </div>
+                    )}
+                    {formState.file && !isUploading && (
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          {/* 1️⃣ work out which icon to show */}
+                          {(() => {
+                            const DocIcon = getFileIcon(
+                              formState.file.name ?? ""
+                            );
+                            return (
+                              <div className="p-2 bg-green-100 rounded-lg">
+                                {/* 2️⃣ render it */}
+                                <DocIcon className="h-6 w-6 text-green-600" />
+                              </div>
+                            );
+                          })()}
+
+                          {/* 3️⃣ rest of the preview */}
+                          <div className="flex-1 space-y-1">
+                            <div className="font-medium text-green-900">
+                              {formState.file.name}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter className="gap-3 pt-4">
+                <Button variant="outline" onClick={handleCancel} size="lg">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreate}
+                  disabled={
+                    !formState.name.trim() ||
+                    !formState.description.trim() ||
+                    !formState.departmentId ||
+                    isUploading // Disable if file is still being processed
+                  }
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                >
+                  Create SOP
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
-        {/* create trigger */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add New SOP
-            </Button>
-          </DialogTrigger>
-          {/* create dialog */}
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create New SOP</DialogTitle>
-              <DialogDescription>
-                Fill in the details and click <b>Create SOP</b>.
+        {/* Error Alert */}
+        {error && (
+          <Alert
+            variant="destructive"
+            className="mb-6 border-red-200 bg-red-50"
+          >
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="font-medium">{error}</AlertDescription>
+          </Alert>
+        )}
+        {/* Main Content Card */}
+        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b">
+            <CardTitle className="flex items-center justify-between text-xl">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <span>SOP Directory</span>
+              </div>
+              <Badge
+                variant="secondary"
+                className="bg-blue-100 text-blue-700 px-3 py-1"
+              >
+                {sops.length} {sops.length === 1 ? "item" : "items"}
+              </Badge>
+            </CardTitle>
+            <CardDescription className="text-base">
+              View and manage all Standard Operating Procedures
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600" />
+                <p className="text-muted-foreground font-medium">
+                  Loading SOPs...
+                </p>
+              </div>
+            ) : sops.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                <div className="p-4 bg-gray-100 rounded-full">
+                  <FileText className="h-12 w-12 text-gray-400" />
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="text-lg font-medium text-gray-900">
+                    No SOPs found
+                  </p>
+                  <p className="text-muted-foreground">
+                    Get started by creating your first SOP
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow>
+                      <TableHead className="font-semibold">Title</TableHead>
+                      <TableHead className="hidden sm:table-cell font-semibold">
+                        Department
+                      </TableHead>
+                      <TableHead className="hidden sm:table-cell font-semibold">
+                        Documents
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell font-semibold">
+                        ID
+                      </TableHead>
+                      <TableHead className="text-right font-semibold">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sops.map((sop, index) => (
+                      <TableRow
+                        key={sop.sopId}
+                        className="hover:bg-slate-50/50 transition-colors"
+                      >
+                        <TableCell className="font-medium">
+                          {sop.name}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <span>
+                              {departments.find(
+                                (d) =>
+                                  d.departmentID === (sop as any).departmentId
+                              )?.name || "Unassigned"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge variant="outline" className="gap-1">
+                            <FileText className="h-3 w-3" />
+                            {existingDocuments[sop.sopId]?.length || 0} file(s)
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
+                            {sop.sopId.slice(0, 8)}...
+                          </code>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEdit(sop)}
+                              className="hover:bg-blue-50 hover:border-blue-200"
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              <span className="hidden sm:inline">Edit</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDelete(sop.sopId)}
+                              className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              <span className="hidden sm:inline">Delete</span>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl font-semibold flex items-center gap-2">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Edit className="h-5 w-5 text-orange-600" />
+                </div>
+                Edit SOP
+              </DialogTitle>
+              <DialogDescription className="text-base">
+                Update the SOP details and manage attached documents.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Title</Label>
+            <Separator />
+            <div className="grid gap-6 py-4">
+              <div className="grid gap-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  SOP Title
+                </Label>
                 <Input
+                  placeholder="Enter SOP title..."
                   value={formState.name}
                   onChange={(e) =>
                     setFormState({ ...formState, name: e.target.value })
                   }
+                  className="h-11"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label>Description</Label>
+              <div className="grid gap-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Edit className="h-4 w-4" />
+                  Description
+                </Label>
                 <Input
+                  placeholder="Enter description..."
                   value={formState.description}
                   onChange={(e) =>
                     setFormState({ ...formState, description: e.target.value })
                   }
+                  className="h-11"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label>Department</Label>
-                <DepartmentSelect
+              <div className="grid gap-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Department
+                </Label>
+                <DepartmentCombobox
                   value={formState.departmentId}
                   onChange={(val) =>
                     setFormState({ ...formState, departmentId: val })
                   }
+                  open={editDepartmentSearchOpen}
+                  setOpen={setEditDepartmentSearchOpen}
+                  placeholder="Search and select department..."
                 />
               </div>
-              {/* file upload */}
-              <div className="grid gap-2">
-                <Label>Attach File (optional)</Label>
-                <Input
-                  type="file"
-                  onChange={(e) =>
-                    handleFileChange(e.target.files?.[0] ?? null)
-                  }
-                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.ppt,.pptx"
-                />
-                {formState.file && (
-                  <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                    <div>
-                      📄 <strong>{formState.file.name}</strong>
-                    </div>
-                    <div>Size: {formatFileSize(formState.file.size)}</div>
-                    <div>Type: {getMimeType(formState.file.name)}</div>
-                    <div>
-                      Extension:{" "}
-                      <code>{getFileExtension(formState.file.name)}</code>
+              {/* Existing Documents Section */}
+              {editingSop &&
+                existingDocuments[editingSop.sopId]?.length > 0 && (
+                  <div className="grid gap-3">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Existing Documents
+                    </Label>
+                    <div className="space-y-3 max-h-40 overflow-y-auto">
+                      {existingDocuments[editingSop.sopId].map((doc) => {
+                        const DocIcon = getFileIcon(doc.name || "");
+                        return (
+                          <div
+                            key={doc.documentID}
+                            className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg cursor-pointer"
+                            onClick={() => handlePreview(doc)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-blue-100 rounded-lg">
+                                <DocIcon className="h-7 w-7 text-blue-600" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-blue-900">
+                                  {doc.name || "Unnamed Document"}
+                                </div>
+                                {doc.description && (
+                                  <div className="text-sm text-blue-700">
+                                    {doc.description}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownload(doc);
+                              }}
+                              className="hover:bg-blue-100"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
+              <div className="grid gap-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Add New Document (optional)
+                </Label>
+                <div className="space-y-3">
+                  <Input
+                    type="file"
+                    onChange={(e) =>
+                      handleFileChange(e.target.files?.[0] ?? null)
+                    }
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.ppt,.pptx"
+                    className="h-11"
+                    disabled={isUploading}
+                  />
+                  {isUploading && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {uploadProgress < 100
+                            ? "Reading file..."
+                            : "Processing file..."}
+                        </span>
+                        <span className="font-medium">{uploadProgress}%</span>
+                      </div>
+                      <Progress value={uploadProgress} className="h-2" />
+                    </div>
+                  )}
+                  {formState.file && !isUploading && (
+                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <div className="font-medium text-green-900">
+                            {formState.file.name}
+                          </div>
+                          <div className="text-sm text-green-700">
+                            Size: {formatFileSize(formState.file.size)} • Type:{" "}
+                            {getMimeType(formState.file.name)}
+                          </div>
+                          <div className="text-xs text-green-600">
+                            Extension:{" "}
+                            <code className="bg-green-100 px-1 rounded">
+                              {"." + getFileExtension(formState.file.name)}
+                            </code>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={handleCancel}>
+            {editingSop && (
+              <div className="grid gap-3">
+                <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  SOP ID
+                </Label>
+                <div className="p-3 bg-gray-50 border rounded-lg">
+                  <code className="text-sm font-mono text-gray-700">
+                    {editingSop.sopId}
+                  </code>
+                </div>
+              </div>
+            )}
+            <DialogFooter className="gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="cursor-pointer"
+                onClick={handleCancel}
+                size="lg"
+              >
                 Cancel
               </Button>
               <Button
-                onClick={handleCreate}
+                onClick={handleUpdate}
                 disabled={
                   !formState.name.trim() ||
                   !formState.description.trim() ||
-                  !formState.departmentId
+                  !formState.departmentId ||
+                  isUploading
                 }
+                size="lg"
+                className="bg-primary cursor-pointer"
               >
-                Create SOP
+                Update SOP
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {/* File Preview Dialog */}
+        <FilePreviewDialog
+          open={isPreviewDialogOpen}
+          onOpenChange={setIsPreviewDialogOpen}
+          document={previewDocument}
+        />
       </div>
-
-      {/* error */}
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* list */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>SOP List</span>
-            <Badge variant="secondary">
-              {sops.length} {sops.length === 1 ? "item" : "items"}
-            </Badge>
-          </CardTitle>
-          <CardDescription>View and manage all SOPs</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-            </div>
-          ) : sops.length === 0 ? (
-            <p className="py-8 text-center text-muted-foreground">
-              No SOPs found.
-            </p>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead className="hidden sm:table-cell">
-                      Department
-                    </TableHead>
-                    <TableHead className="hidden sm:table-cell">ID</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sops.map((sop) => (
-                    <TableRow key={sop.sopId}>
-                      <TableCell>{sop.name}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {departments.find(
-                          (d) => d.departmentID === (sop as any).departmentId
-                        )?.name || "-"}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell font-mono text-sm text-muted-foreground">
-                        {sop.sopId}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEdit(sop)}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            <span className="hidden sm:inline">Edit</span>
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDelete(sop.sopId)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            <span className="hidden sm:inline">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* edit dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit SOP</DialogTitle>
-            <DialogDescription>Update the SOP details below.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Title</Label>
-              <Input
-                value={formState.name}
-                onChange={(e) =>
-                  setFormState({ ...formState, name: e.target.value })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Description</Label>
-              <Input
-                value={formState.description}
-                onChange={(e) =>
-                  setFormState({
-                    ...formState,
-                    description: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Department</Label>
-              <DepartmentSelect
-                value={formState.departmentId}
-                onChange={(val) =>
-                  setFormState({ ...formState, departmentId: val })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Replace File (optional)</Label>
-              <Input
-                type="file"
-                onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
-                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.ppt,.pptx"
-              />
-              {formState.file && (
-                <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                  <div>
-                    📄 <strong>{formState.file.name}</strong>
-                  </div>
-                  <div>Size: {formatFileSize(formState.file.size)}</div>
-                  <div>Type: {getMimeType(formState.file.name)}</div>
-                  <div>
-                    Extension:{" "}
-                    <code>{getFileExtension(formState.file.name)}</code>
-                  </div>
-                </div>
-              )}
-            </div>
-            {editingSop && (
-              <div className="grid gap-2">
-                <Label className="text-sm text-muted-foreground">SOP ID</Label>
-                <div className="px-3 py-2 bg-muted rounded-md font-mono text-sm">
-                  {editingSop.sopId}
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleUpdate}
-              disabled={
-                !formState.name.trim() ||
-                !formState.description.trim() ||
-                !formState.departmentId
-              }
-            >
-              Update SOP
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
