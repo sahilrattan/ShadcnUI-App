@@ -10,7 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { getFileIcon, getMimeType } from "@/utils/file-utils";
 import type { DocumentUrlListVM } from "@/api/models/DocumentUrlListVM";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
+import { ExternalLink, Download, AlertCircle } from "lucide-react";
 
 interface FilePreviewDialogProps {
   open: boolean;
@@ -23,16 +24,38 @@ export function FilePreviewDialog({
   onOpenChange,
   document,
 }: FilePreviewDialogProps) {
+  const [isLoading, setIsLoading] = useState(true);
   const mimeType = getMimeType(document?.name ?? "");
   const Icon = getFileIcon(document?.name ?? "");
   const fileUrl = document?.url || document?.blobUrl || "";
 
-  /** Open PDF in a new tab using the browser’s native viewer. */
-  const openPdf = useCallback(() => {
-    if (fileUrl) window.open(fileUrl, "_blank");
+  const getProxyUrl = useCallback(() => {
+    return `http://localhost:3001/api/view-pdf?url=${encodeURIComponent(
+      fileUrl
+    )}`;
   }, [fileUrl]);
 
-  /** Auto‑open when the dialog shows a PDF. */
+  const openPdf = useCallback(() => {
+    if (fileUrl) {
+      const proxyUrl = getProxyUrl();
+      window.open(proxyUrl, "_blank", "noopener,noreferrer");
+    }
+  }, [fileUrl, getProxyUrl]);
+
+  const downloadFile = useCallback(() => {
+    if (fileUrl && document?.name) {
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      link.download = document.name;
+      link.click();
+    }
+  }, [fileUrl, document?.name]);
+
+  useEffect(() => {
+    if (open) {
+      setIsLoading(true);
+    }
+  }, [open]);
 
   if (!document) return null;
 
@@ -47,55 +70,94 @@ export function FilePreviewDialog({
       );
     }
 
-    /** ---------- Image preview ---------- */
+    /** ---------- Image ---------- */
     if (mimeType.startsWith("image/")) {
       return (
         <img
           src={fileUrl}
           alt={document.name ?? "File preview"}
           className="max-w-full max-h-[70vh] object-contain mx-auto"
+          onLoad={() => setIsLoading(false)}
         />
       );
     }
 
-    /** ---------- PDF preview with iframe ---------- */
+    /** ---------- PDF with iframe (via proxy) ---------- */
     if (mimeType === "application/pdf") {
+      const proxyUrl = getProxyUrl();
       return (
-        <div className="w-full h-[80vh]">
-          <embed
-            src={fileUrl}
-            height="100%"
+        <div className="w-full h-[80vh] relative">
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
+              <div className="flex flex-col items-center gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="text-sm text-muted-foreground">Loading PDF...</p>
+              </div>
+            </div>
+          )}
+          <iframe
+            src={proxyUrl}
             width="100%"
+            height="100%"
             style={{ border: "none" }}
             title="PDF Preview"
+            onLoad={() => setIsLoading(false)}
           />
-          {/* <iframe
-            src={fileUrl}
-            width="100%"
-            height="100%"
-            style={{ border: "none" }}
-            title="PDF Preview"
-          /> */}
+          {/* {!isLoading && (
+            <div className="absolute top-4 right-4 flex gap-2 z-20">
+              <Button
+                onClick={openPdf}
+                size="sm"
+                variant="secondary"
+                className="flex items-center gap-1"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Open
+              </Button>
+              <Button
+                onClick={downloadFile}
+                size="sm"
+                variant="secondary"
+                className="flex items-center gap-1"
+              >
+                <Download className="h-3 w-3" />
+                Download
+              </Button>
+            </div>
+          )} */}
         </div>
       );
     }
 
-    /** ---------- Other file types ---------- */
+    /** ---------- Unsupported file ---------- */
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-        <Icon className="h-16 w-16 mb-4" />
-        <p className="text-lg font-medium">No direct preview available.</p>
-        <p className="text-sm">
-          You can{" "}
-          <a
-            href={fileUrl}
-            download={document.name}
-            className="text-blue-600 hover:underline"
-          >
-            download the file
-          </a>{" "}
-          to view it.
+      <div className="flex flex-col items-center justify-center py-8 space-y-4">
+        <AlertCircle className="h-16 w-16 text-amber-500 mb-2" />
+        <p className="text-lg font-medium">Preview not available</p>
+        <p className="text-sm text-muted-foreground text-center max-w-md">
+          This file cannot be displayed in-browser. You can open it in a new tab
+          or download it below.
         </p>
+        <div className="flex gap-3 mt-4">
+          {mimeType === "application/pdf" && (
+            <Button
+              onClick={openPdf}
+              variant="default"
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Open in New Tab
+            </Button>
+          )}
+          <Button
+            onClick={downloadFile}
+            variant="outline"
+            className="flex items-center gap-2 bg-transparent"
+          >
+            <Download className="h-4 w-4" />
+            Download File
+          </Button>
+        </div>
       </div>
     );
   };
@@ -109,10 +171,9 @@ export function FilePreviewDialog({
             {document.name ?? "File Preview"}
           </DialogTitle>
           <DialogDescription>
-            Preview of: {document.description ?? "No description available."}
+            {document.description ?? "No description available."}
           </DialogDescription>
         </DialogHeader>
-
         <div className="py-4 flex justify-center items-center w-full">
           {renderPreviewContent()}
         </div>

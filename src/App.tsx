@@ -27,13 +27,17 @@ import { PushManager } from "./components/PushManager";
 import TicketingSystem from "./components/TicketManagement";
 import ProfilePage from "./components/ProfilePage";
 import ChangePasswordForm from "./modules/auth/changePassword";
+import ForgotPasswordForm from "./modules/auth/forgotPassword";
 // import DepartmentList from "./components/DepartmentList";
 import CitiesPage from "./components/Cities";
 
 import { OpenAPI } from "@/api/core/OpenAPI";
 import { CustomOpenAPIConfig } from "@/api/custom/OpenAPIConfig";
 import SopPage from "./components/Sop";
-
+import { AvatarProvider } from "@/stores/AvatarStore";
+// import ResetPasswordForm from "./modules/auth/resetPassword";
+import ResetPasswordPage from "./modules/auth/resetPassword";
+import FallbackRoot from "./ResetFallback";
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
@@ -77,46 +81,52 @@ export default function App() {
   }
 
   return (
-    <I18nProvider i18n={i18n}>
-      <ThemeProvider>
-        <SidebarProvider>
-          <div className="flex">
-            <AppSidebar />
-            <main className="flex-1 min-h-screen overflow-x-hidden">
-              <NavigationMenuBar />
-              <SidebarTrigger />
-              <PushManager />
-              <div className="p-4">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/inbox" element={<Inbox />} />
-                  <Route path="/signup" element={<SignUpForm />} />
-                  <Route path="/data" element={<UserTable />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/calendar" element={<Calendar1 />} />
-                  {/* <Route path="/chart" element={<Chart />} />  */}
-                  <Route path="/signup" element={<SignUpForm />} />
-                  <Route path="/signin" element={<SignInForm />} />
-                  <Route path="/kanban" element={<KanbanBoard />} />
-                  <Route path="/chart" element={<OrgChart />} />
-                  <Route path="/billing" element={<InvoiceForm />} />
-                  <Route path="/queries" element={<TicketingSystem />} />
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route
-                    path="/change-password"
-                    element={<ChangePasswordForm />}
-                  />
-                  {/* <Route path="/department-list" element={<DepartmentList />} /> */}
-                  <Route path="/cities" element={<CitiesPage />} />
-                  <Route path="/sop-list" element={<SopPage />} />
-                </Routes>
-              </div>
-            </main>
-            <Toaster richColors position="top-center" />
-          </div>
-        </SidebarProvider>
-      </ThemeProvider>
-    </I18nProvider>
+    <AvatarProvider>
+      <I18nProvider i18n={i18n}>
+        <ThemeProvider>
+          <SidebarProvider>
+            <div className="flex">
+              <AppSidebar />
+              <main className="flex-1 min-h-screen overflow-x-hidden">
+                <NavigationMenuBar />
+                <SidebarTrigger />
+                <PushManager />
+                <div className="p-4">
+                  <Routes>
+                    <Route path="/" element={<FallbackRoot />} />
+                    <Route path="/inbox" element={<Inbox />} />
+                    <Route path="/signup" element={<SignUpForm />} />
+                    <Route path="/data" element={<UserTable />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/account" element={<Account />} />
+                    <Route path="/calendar" element={<Calendar1 />} />
+                    {/* <Route path="/chart" element={<Chart />} />  */}
+                    <Route path="/signup" element={<SignUpForm />} />
+                    <Route path="/signin" element={<SignInForm />} />
+                    <Route path="/kanban" element={<KanbanBoard />} />
+                    <Route path="/chart" element={<OrgChart />} />
+                    <Route path="/billing" element={<InvoiceForm />} />
+                    <Route path="/queries" element={<TicketingSystem />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route
+                      path="/forgot-password"
+                      element={<ForgotPasswordForm />}
+                    />
+                    {/* <Route path="/department-list" element={<DepartmentList />} /> */}
+                    <Route path="/cities" element={<CitiesPage />} />
+                    <Route path="/sop-list" element={<SopPage />} />
+                    <Route
+                      path="/reset-password"
+                      element={<ResetPasswordPage />}
+                    />
+                  </Routes>
+                </div>
+              </main>
+              <Toaster richColors position="top-center" />
+            </div>
+          </SidebarProvider>
+        </ThemeProvider>
+      </I18nProvider>
+    </AvatarProvider>
   );
 }

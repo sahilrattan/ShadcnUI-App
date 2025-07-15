@@ -59,7 +59,7 @@ const SignInForm = () => {
   };
 
   const handleChangePassword = () => {
-    navigate("/change-password");
+    navigate("/forgot-password");
   };
 
   return (

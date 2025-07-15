@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { SopService } from "@/api/services/SopService";
 import { DepartmentService } from "@/api/services/DepartmentService";
@@ -61,15 +60,15 @@ import {
   CheckCircle2,
   ChevronDown,
   Check,
+  File,
 } from "lucide-react";
-import { cn } from "@/utils/cn";
+import { cn } from "@/utils/cn"; // Assuming cn is in utils/cn
 import type { SopListVM } from "@/api/models/SopListVM";
 import type { Department } from "@/api/models/Department";
 import type { CreateDocumentUrlCommand } from "@/api/models/CreateDocumentUrlCommand";
 import type { DocumentUrlListVM } from "@/api/models/DocumentUrlListVM";
-
-import { getFileIcon, getFileExtension, getMimeType } from "@/utils/file-utils";
-import { FilePreviewDialog } from "@/components/FilePreview";
+import { getFileIcon, getFileExtension, getMimeType } from "@/utils/file-utils"; // Assuming these utilities exist
+import { FilePreviewDialog } from "@/components/FilePreview"; // Corrected import
 
 export default function SopPageEnhanced() {
   const [sops, setSops] = useState<SopListVM[]>([]);
@@ -97,7 +96,6 @@ export default function SopPageEnhanced() {
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
   const [editDepartmentSearchOpen, setEditDepartmentSearchOpen] =
     useState(false);
-
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [previewDocument, setPreviewDocument] =
     useState<DocumentUrlListVM | null>(null);
@@ -108,7 +106,7 @@ export default function SopPageEnhanced() {
       .then((res) => {
         const depts = res.data ?? [];
         setDepartments(depts);
-        setFilteredDepartments(depts.slice(0, 10));
+        setFilteredDepartments(depts.slice(0, 10)); // Initial filter for performance
       })
       .catch(() => setError("Could not load departments list."));
   }, []);
@@ -165,6 +163,15 @@ export default function SopPageEnhanced() {
     const selectedDepartment = departments.find(
       (d) => d.departmentID === value
     );
+    // Filter departments based on input for search
+    const handleSearch = (search: string) => {
+      const lowerCaseSearch = search.toLowerCase();
+      setFilteredDepartments(
+        departments.filter((dept) =>
+          dept.name?.toLowerCase().includes(lowerCaseSearch)
+        )
+      );
+    };
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -172,7 +179,7 @@ export default function SopPageEnhanced() {
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between h-10 bg-transparent"
+            className="w-full justify-between h-10 bg-background px-4 py-2 rounded-lg border border-input text-left shadow-sm transition-all hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" // Enhanced styling
           >
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -183,9 +190,16 @@ export default function SopPageEnhanced() {
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent
+          className="w-[var(--radix-popover-trigger-width)] p-0 rounded-lg shadow-lg" // Enhanced styling
+          align="start"
+        >
           <Command>
-            <CommandInput placeholder="Search departments..." className="h-9" />
+            <CommandInput
+              placeholder="Search departments..."
+              className="h-9 px-4 py-2" // Enhanced styling
+              onValueChange={handleSearch}
+            />
             <CommandList>
               <CommandEmpty>No department found.</CommandEmpty>
               <CommandGroup>
@@ -197,13 +211,14 @@ export default function SopPageEnhanced() {
                       onChange(dept.departmentID);
                       setOpen(false);
                     }}
+                    className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground" // Enhanced styling
                   >
                     <div className="flex items-center gap-2 flex-1">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <div className="flex-1">
                         <div className="font-medium">{dept.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          ID: {dept.departmentID.slice(0, 20)}...
+                          ID: {dept.departmentID?.slice(0, 20)}...
                         </div>
                       </div>
                     </div>
@@ -211,7 +226,7 @@ export default function SopPageEnhanced() {
                       className={cn(
                         "ml-auto h-4 w-4",
                         value === dept.departmentID
-                          ? "opacity-100"
+                          ? "opacity-100 text-primary" // Highlight selected
                           : "opacity-0"
                       )}
                     />
@@ -233,10 +248,9 @@ export default function SopPageEnhanced() {
       setIsUploading(false);
       return;
     }
+    setError(""); // Clear any previous file-related errors
     setIsUploading(true);
     setUploadProgress(0);
-
-    // Simulate file reading/conversion progress
     const reader = new FileReader();
     reader.onprogress = (event) => {
       if (event.lengthComputable) {
@@ -246,9 +260,9 @@ export default function SopPageEnhanced() {
     };
     reader.onload = () => {
       setFileBase64(reader.result?.toString().split(",")[1] || "");
-      setUploadProgress(100); // Mark 100% for file reading
+      setUploadProgress(100);
       setTimeout(() => {
-        setIsUploading(false); // Indicate file reading/conversion is done
+        setIsUploading(false);
       }, 500);
     };
     reader.onerror = () => {
@@ -261,14 +275,16 @@ export default function SopPageEnhanced() {
 
   const handleCreate = async () => {
     const { name, description, departmentId, file } = formState;
-    if (!name.trim() || !description.trim() || !departmentId) return;
+    if (!name.trim() || !description.trim() || !departmentId) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+    if (file && isUploading) {
+      setError("Please wait for the file to finish processing.");
+      return;
+    }
+    setError(""); // Clear previous errors
     try {
-      // If a file is being uploaded, wait for it to be processed (base64 conversion)
-      if (file && isUploading) {
-        setError("Please wait for the file to finish processing.");
-        return;
-      }
-
       const sopRes = await SopService.postApiVSop("1", {
         name,
         description,
@@ -276,20 +292,21 @@ export default function SopPageEnhanced() {
       });
       const sopId =
         sopRes.data?.sopId ||
-        sopRes.data?.data?.sopId ||
-        sopRes.data?.data?.sopID;
+        (sopRes.data as any)?.data?.sopId ||
+        (sopRes.data as any)?.data?.sopID;
       if (file && fileBase64 && sopId) {
         const ext = getFileExtension(file.name);
         const extension = ext.startsWith(".") ? ext : `.${ext}`;
         const docCmd: CreateDocumentUrlCommand = {
           name: file.name,
           description: `Document for ${name}`,
-          content: fileBase64, // Using 'content' for base64 data
+          content: fileBase64,
           category: "Sop",
           categoryId: sopId,
           extension: extension,
           contentType: file.type,
           documentFileName: file.name,
+          url: fileBase64, // This 'url' field might be redundant if 'content' is used for base64
         };
         await DocumentsService.postApiVDocuments("1", docCmd);
       }
@@ -313,20 +330,23 @@ export default function SopPageEnhanced() {
     setFileBase64("");
     setUploadProgress(0);
     setIsUploading(false);
+    setError(""); // Clear errors when opening edit dialog
     setIsEditDialogOpen(true);
   };
 
   const handleUpdate = async () => {
     if (!editingSop) return;
     const { name, description, departmentId, file } = formState;
-    if (!name.trim() || !description.trim() || !departmentId) return;
+    if (!name.trim() || !description.trim() || !departmentId) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+    if (file && isUploading) {
+      setError("Please wait for the file to finish processing.");
+      return;
+    }
+    setError(""); // Clear previous errors
     try {
-      // If a file is being uploaded, wait for it to be processed (base64 conversion)
-      if (file && isUploading) {
-        setError("Please wait for the file to finish processing.");
-        return;
-      }
-
       await SopService.putApiVSop("1", {
         sopId: editingSop.sopId,
         name,
@@ -339,12 +359,13 @@ export default function SopPageEnhanced() {
         const docCmd: CreateDocumentUrlCommand = {
           name: file.name,
           description: `Document for ${name}`,
-          content: fileBase64, // Changed from 'url' to 'content' for consistency
+          content: fileBase64,
           category: "Sop",
           categoryId: editingSop.sopId,
-          extension: extension, // Added for consistency
-          contentType: file.type, // Added for consistency
-          documentFileName: file.name, // Added for consistency
+          extension: extension,
+          contentType: file.type,
+          documentFileName: file.name,
+          url: fileBase64,
         };
         await DocumentsService.postApiVDocuments("1", docCmd);
       }
@@ -359,7 +380,7 @@ export default function SopPageEnhanced() {
   };
 
   const handleDelete = (id: string) =>
-    confirm("Delete this SOP?") &&
+    confirm("Are you sure you want to delete this SOP?") &&
     SopService.deleteSop(id, "1")
       .then(fetchSops)
       .catch(() => setError("Failed to delete SOP. Please try again."));
@@ -373,6 +394,7 @@ export default function SopPageEnhanced() {
     setEditDepartmentSearchOpen(false);
     setIsPreviewDialogOpen(false);
     setPreviewDocument(null);
+    setError(""); // Clear error on cancel
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -389,6 +411,7 @@ export default function SopPageEnhanced() {
     try {
       if (!doc.categoryID || !doc.name || !doc.blobUrl) {
         console.warn("Missing document metadata for download");
+        setError("Cannot download: Missing document URL or name.");
         return;
       }
       const link = document.createElement("a");
@@ -399,6 +422,7 @@ export default function SopPageEnhanced() {
       document.body.removeChild(link);
     } catch (error) {
       console.error("Download error", error);
+      setError("Failed to download document.");
     }
   };
 
@@ -408,19 +432,29 @@ export default function SopPageEnhanced() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-7xl">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      {" "}
+      {/* Changed background for better contrast */}
+      <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-9xl">
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10">
+          {" "}
+          {/* Increased bottom margin */}
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-              <FileText className="h-8 w-8 text-white" />
+            <div className="p-4 bg-primary/10 rounded-2xl shadow-md">
+              {" "}
+              {/* Larger padding, more rounded, subtle shadow */}
+              <FileText className="h-6 w-6 text-primary" /> {/* Larger icon */}
             </div>
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-50">
+                {" "}
+                {/* Bolder font, darker text */}
                 SOP Management
               </h1>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-muted-foreground text-md mt-1">
+                {" "}
+                {/* Slightly larger text */}
                 Manage Standard Operating Procedures with ease
               </p>
             </div>
@@ -432,47 +466,63 @@ export default function SopPageEnhanced() {
             <DialogTrigger asChild>
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-xl transition-all duration-200 ease-in-out   transform hover:-translate-y-0.5"
               >
+                {" "}
+                {/* Enhanced button style */}
                 <Plus className="h-5 w-5 mr-2" />
                 Add New SOP
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl">
+              {" "}
+              {/* More rounded, stronger shadow */}
               <DialogHeader className="space-y-3">
-                <DialogTitle className="text-2xl font-semibold flex items-center gap-2">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Plus className="h-5 w-5 text-blue-600" />
+                <DialogTitle className="text-2xl font-bold flex items-center gap-3 text-gray-900 dark:text-gray-50">
+                  {" "}
+                  {/* Bolder title */}
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                    <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   Create New SOP
                 </DialogTitle>
-                <DialogDescription className="text-base">
+                <DialogDescription className="text-base text-muted-foreground">
                   Fill in the details below to create a new Standard Operating
                   Procedure.
                 </DialogDescription>
               </DialogHeader>
-              <Separator />
+              <Separator className="my-4" /> {/* Added margin to separator */}
               <div className="grid gap-6 py-4">
                 <div className="grid gap-3">
-                  <Label className="text-sm font-medium flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
+                  <Label
+                    htmlFor="sop-title"
+                    className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                  >
+                    {" "}
+                    {/* Darker label text */}
+                    <FileText className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     SOP Title
                   </Label>
                   <Input
+                    id="sop-title"
                     placeholder="Enter SOP title..."
                     value={formState.name}
                     onChange={(e) =>
                       setFormState({ ...formState, name: e.target.value })
                     }
-                    className="h-11"
+                    className="h-11 rounded-lg border border-input focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" // Enhanced input style
                   />
                 </div>
                 <div className="grid gap-3">
-                  <Label className="text-sm font-medium flex items-center gap-2">
-                    <Edit className="h-4 w-4" />
+                  <Label
+                    htmlFor="sop-description"
+                    className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                  >
+                    <Edit className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     Description
                   </Label>
                   <Input
+                    id="sop-description"
                     placeholder="Enter description..."
                     value={formState.description}
                     onChange={(e) =>
@@ -481,12 +531,12 @@ export default function SopPageEnhanced() {
                         description: e.target.value,
                       })
                     }
-                    className="h-11"
+                    className="h-11 rounded-lg border border-input focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   />
                 </div>
                 <div className="grid gap-3">
-                  <Label className="text-sm font-medium flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
+                  <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                    <Building2 className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     Department
                   </Label>
                   <DepartmentCombobox
@@ -500,8 +550,8 @@ export default function SopPageEnhanced() {
                   />
                 </div>
                 <div className="grid gap-3">
-                  <Label className="text-sm font-medium flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
+                  <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                    <Upload className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     Attach File (optional)
                   </Label>
                   <div className="space-y-3">
@@ -511,42 +561,60 @@ export default function SopPageEnhanced() {
                         handleFileChange(e.target.files?.[0] ?? null)
                       }
                       accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.ppt,.pptx"
-                      className="h-11"
+                      className="h-11 rounded-lg border border-input file:text-primary file:font-medium file:bg-primary/5 file:border-0 file:rounded-md file:py-2 file:px-3 hover:file:bg-primary/10 transition-all duration-200" // Enhanced file input
                       disabled={isUploading}
                     />
                     {isUploading && (
-                      <div className="space-y-2">
+                      <div className="space-y-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                        {" "}
+                        {/* Added padding and border */}
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">
                             {uploadProgress < 100
                               ? "Reading file..."
                               : "Processing file..."}
                           </span>
-                          <span className="font-medium">{uploadProgress}%</span>
+                          <span className="font-medium text-blue-700 dark:text-blue-300">
+                            {uploadProgress}%
+                          </span>
                         </div>
-                        <Progress value={uploadProgress} className="h-2" />
+                        <Progress
+                          value={uploadProgress}
+                          className="h-2 bg-blue-200 dark:bg-blue-800 [&>*]:bg-blue-600 dark:[&>*]:bg-blue-400"
+                        />{" "}
+                        {/* Styled progress bar */}
                       </div>
                     )}
                     {formState.file && !isUploading && (
-                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                      <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg shadow-sm">
+                        {" "}
+                        {/* Enhanced file info card */}
                         <div className="flex items-start gap-3">
-                          {/* 1️⃣ work out which icon to show */}
                           {(() => {
                             const DocIcon = getFileIcon(
-                              formState.file.name ?? ""
+                              formState.file?.name ?? ""
                             );
                             return (
-                              <div className="p-2 bg-green-100 rounded-lg">
-                                {/* 2️⃣ render it */}
-                                <DocIcon className="h-6 w-6 text-green-600" />
+                              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                                <DocIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                               </div>
                             );
                           })()}
-
-                          {/* 3️⃣ rest of the preview */}
                           <div className="flex-1 space-y-1">
-                            <div className="font-medium text-green-900">
+                            <div className="font-medium text-blue-900 dark:text-blue-100">
                               {formState.file.name}
+                            </div>
+                            <div className="text-sm text-blue-700 dark:text-blue-300">
+                              Size: {formatFileSize(formState.file.size)} •
+                              Type: {getMimeType(formState.file.name)}
+                            </div>
+                            <div className="text-xs text-blue-600 dark:text-blue-400">
+                              Extension:{" "}
+                              <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded text-blue-800 dark:text-blue-200">
+                                {" "}
+                                {/* Styled code tag */}
+                                {"." + getFileExtension(formState.file.name)}
+                              </code>
                             </div>
                           </div>
                         </div>
@@ -555,8 +623,13 @@ export default function SopPageEnhanced() {
                   </div>
                 </div>
               </div>
-              <DialogFooter className="gap-3 pt-4">
-                <Button variant="outline" onClick={handleCancel} size="lg">
+              <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  size="lg"
+                  className="bg-transparent border border-gray-300 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800 rounded-lg transition-all duration-200" // Enhanced button style
+                >
                   Cancel
                 </Button>
                 <Button
@@ -565,10 +638,10 @@ export default function SopPageEnhanced() {
                     !formState.name.trim() ||
                     !formState.description.trim() ||
                     !formState.departmentId ||
-                    isUploading // Disable if file is still being processed
+                    isUploading
                   }
                   size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  className="bg-primary hover:bg-primary/90 text-white rounded-lg transition-all duration-200" // Enhanced button style
                 >
                   Create SOP
                 </Button>
@@ -580,88 +653,101 @@ export default function SopPageEnhanced() {
         {error && (
           <Alert
             variant="destructive"
-            className="mb-6 border-red-200 bg-red-50"
+            className="mb-8 border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800 text-red-800 dark:text-red-200 rounded-lg shadow-sm" // Enhanced alert style
           >
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />{" "}
+            {/* Larger icon */}
             <AlertDescription className="font-medium">{error}</AlertDescription>
           </Alert>
         )}
         {/* Main Content Card */}
-        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b">
-            <CardTitle className="flex items-center justify-between text-xl">
+        <Card className="shadow-xl border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+          {" "}
+          {/* Stronger shadow, more rounded, overflow hidden for table */}
+          <CardHeader className="border-b border-gray-200 dark:border-gray-800 p-6">
+            {" "}
+            {/* Added padding */}
+            <CardTitle className="flex items-center justify-between text-2xl font-bold text-gray-900 dark:text-gray-50">
+              {" "}
+              {/* Bolder title, larger text */}
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <FileText className="h-5 w-5 text-blue-600" />
+                <div className="p-2  rounded-lg">
+                  <FileText className="h-6 w-6 text-primary " />{" "}
+                  {/* Larger icon */}
                 </div>
                 <span>SOP Directory</span>
               </div>
               <Badge
                 variant="secondary"
-                className="bg-blue-100 text-blue-700 px-3 py-1"
+                className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1.5 rounded-full text-sm font-semibold" // Enhanced badge style
               >
                 {sops.length} {sops.length === 1 ? "item" : "items"}
               </Badge>
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="text-base text-muted-foreground mt-2">
               View and manage all Standard Operating Procedures
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600" />
-                <p className="text-muted-foreground font-medium">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400" />
+                <p className="text-muted-foreground font-medium text-lg">
                   Loading SOPs...
                 </p>
               </div>
             ) : sops.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="p-4 bg-gray-100 rounded-full">
-                  <FileText className="h-12 w-12 text-gray-400" />
+                <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full">
+                  <FileText className="h-12 w-12 text-gray-400 dark:text-gray-600" />
                 </div>
                 <div className="text-center space-y-2">
-                  <p className="text-lg font-medium text-gray-900">
+                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">
                     No SOPs found
                   </p>
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-base">
                     Get started by creating your first SOP
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="overflow-hidden">
+              <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader className="bg-slate-50">
-                    <TableRow>
-                      <TableHead className="font-semibold">Title</TableHead>
-                      <TableHead className="hidden sm:table-cell font-semibold">
+                  <TableHeader className="bg-gray-50 dark:bg-gray-800">
+                    {" "}
+                    {/* Slightly different header background */}
+                    <TableRow className="border-b border-gray-200 dark:border-gray-700">
+                      <TableHead className="font-semibold px-6 py-3 dark:text-gray-300 text-left">
+                        {" "}
+                        Title
+                      </TableHead>
+                      <TableHead className="font-semibold px-6 py-3  dark:text-gray-300 text-left">
                         Department
                       </TableHead>
-                      <TableHead className="hidden sm:table-cell font-semibold">
+                      <TableHead className="font-semibold px-6 py-3  dark:text-gray-300 text-left">
                         Documents
                       </TableHead>
-                      <TableHead className="hidden lg:table-cell font-semibold">
+                      <TableHead className="font-semibold px-6 py-3 dark:text-gray-300 text-left">
                         ID
                       </TableHead>
-                      <TableHead className="text-right font-semibold">
+                      <TableHead className="text-right font-semibold px-6 py-3  dark:text-gray-300">
                         Actions
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sops.map((sop, index) => (
+                    {sops.map((sop) => (
                       <TableRow
                         key={sop.sopId}
-                        className="hover:bg-slate-50/50 transition-colors"
+                        className="border-b border-gray-100 dark:border-gray-800  dark:hover:bg-gray-850 transition-colors" // Subtle hover effect
                       >
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium px-6 py-3 text-gray-900 dark:text-gray-100">
                           {sop.name}
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell">
+                        <TableCell className="px-6 py-3">
                           <div className="flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-muted-foreground" />
-                            <span>
+                            <span className=" ">
                               {departments.find(
                                 (d) =>
                                   d.departmentID === (sop as any).departmentId
@@ -669,24 +755,32 @@ export default function SopPageEnhanced() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <Badge variant="outline" className="gap-1">
-                            <FileText className="h-3 w-3" />
+                        <TableCell className="px-6 py-3">
+                          <Badge
+                            variant="outline"
+                            className="gap-1 bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 px-2 py-1 rounded-full"
+                          >
+                            {" "}
+                            {/* Enhanced badge */}
+                            <File className="h-3 w-3" />{" "}
+                            {/* Changed to generic File icon */}
                             {existingDocuments[sop.sopId]?.length || 0} file(s)
                           </Badge>
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
-                            {sop.sopId.slice(0, 8)}...
+                        <TableCell className="px-6 py-3">
+                          <code className="text-sm bg-gray-100 dark:bg-gray-800 dark:text-gray-400 px-2 py-1 rounded font-mono">
+                            {" "}
+                            {/* Styled code tag */}
+                            {sop.sopId?.slice(0, 12)}...
                           </code>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right px-6 py-3">
                           <div className="flex justify-end gap-2">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleEdit(sop)}
-                              className="hover:bg-blue-50 hover:border-blue-200"
+                              className="hover:bg-blue-50 dark:hover:bg-blue-900 hover:border-blue-200 dark:hover:border-blue-700 text-blue-600 dark:text-blue-400 rounded-md transition-all duration-200" // Enhanced button
                             >
                               <Edit className="h-4 w-4 mr-1" />
                               <span className="hidden sm:inline">Edit</span>
@@ -695,7 +789,7 @@ export default function SopPageEnhanced() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleDelete(sop.sopId)}
-                              className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                              className="hover:bg-red-50 dark:hover:bg-red-900 hover:border-red-200 dark:hover:border-red-700 hover:text-red-600 dark:hover:text-red-400 text-red-500 rounded-md transition-all duration-200" // Enhanced button
                             >
                               <Trash2 className="h-4 w-4 mr-1" />
                               <span className="hidden sm:inline">Delete</span>
@@ -712,51 +806,61 @@ export default function SopPageEnhanced() {
         </Card>
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl">
+            {" "}
+            {/* More rounded, stronger shadow */}
             <DialogHeader className="space-y-3">
-              <DialogTitle className="text-2xl font-semibold flex items-center gap-2">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Edit className="h-5 w-5 text-orange-600" />
+              <DialogTitle className="text-2xl font-bold flex items-center gap-3 text-gray-900 dark:text-gray-50">
+                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                  <Edit className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                 </div>
                 Edit SOP
               </DialogTitle>
-              <DialogDescription className="text-base">
+              <DialogDescription className="text-base text-muted-foreground">
                 Update the SOP details and manage attached documents.
               </DialogDescription>
             </DialogHeader>
-            <Separator />
+            <Separator className="my-4" />
             <div className="grid gap-6 py-4">
               <div className="grid gap-3">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
+                <Label
+                  htmlFor="edit-sop-title"
+                  className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                >
+                  <FileText className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                   SOP Title
                 </Label>
                 <Input
+                  id="edit-sop-title"
                   placeholder="Enter SOP title..."
                   value={formState.name}
                   onChange={(e) =>
                     setFormState({ ...formState, name: e.target.value })
                   }
-                  className="h-11"
+                  className="h-11 rounded-lg border border-input focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                 />
               </div>
               <div className="grid gap-3">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <Edit className="h-4 w-4" />
+                <Label
+                  htmlFor="edit-sop-description"
+                  className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                >
+                  <Edit className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                   Description
                 </Label>
                 <Input
+                  id="edit-sop-description"
                   placeholder="Enter description..."
                   value={formState.description}
                   onChange={(e) =>
                     setFormState({ ...formState, description: e.target.value })
                   }
-                  className="h-11"
+                  className="h-11 rounded-lg border border-input focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                 />
               </div>
               <div className="grid gap-3">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
+                <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <Building2 className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                   Department
                 </Label>
                 <DepartmentCombobox
@@ -773,29 +877,31 @@ export default function SopPageEnhanced() {
               {editingSop &&
                 existingDocuments[editingSop.sopId]?.length > 0 && (
                   <div className="grid gap-3">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
+                    <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                      <FileText className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                       Existing Documents
                     </Label>
-                    <div className="space-y-3 max-h-40 overflow-y-auto">
+                    <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                      {" "}
+                      {/* Added custom-scrollbar for better styling */}
                       {existingDocuments[editingSop.sopId].map((doc) => {
                         const DocIcon = getFileIcon(doc.name || "");
                         return (
                           <div
                             key={doc.documentID}
-                            className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg cursor-pointer"
+                            className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg shadow-sm cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" // Enhanced document card
                             onClick={() => handlePreview(doc)}
                           >
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-blue-100 rounded-lg">
-                                <DocIcon className="h-7 w-7 text-blue-600" />
+                              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                                <DocIcon className="h-7 w-7 text-blue-600 dark:text-blue-400" />
                               </div>
                               <div>
-                                <div className="font-medium text-blue-900">
+                                <div className="font-medium text-blue-900 dark:text-blue-100">
                                   {doc.name || "Unnamed Document"}
                                 </div>
                                 {doc.description && (
-                                  <div className="text-sm text-blue-700">
+                                  <div className="text-sm text-blue-700 dark:text-blue-300">
                                     {doc.description}
                                   </div>
                                 )}
@@ -808,7 +914,7 @@ export default function SopPageEnhanced() {
                                 e.stopPropagation();
                                 handleDownload(doc);
                               }}
-                              className="hover:bg-blue-100"
+                              className="hover:bg-accent/20 dark:hover:bg-accent/30 text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors" // Enhanced button
                             >
                               <Download className="h-4 w-4" />
                             </Button>
@@ -819,8 +925,8 @@ export default function SopPageEnhanced() {
                   </div>
                 )}
               <div className="grid gap-3">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <Upload className="h-4 w-4" />
+                <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <Upload className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                   Add New Document (optional)
                 </Label>
                 <div className="space-y-3">
@@ -830,39 +936,44 @@ export default function SopPageEnhanced() {
                       handleFileChange(e.target.files?.[0] ?? null)
                     }
                     accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.ppt,.pptx"
-                    className="h-11"
+                    className="h-11 rounded-lg border border-input file:text-primary file:font-medium file:bg-primary/5 file:border-0 file:rounded-md file:py-2 file:px-3 hover:file:bg-primary/10 transition-all duration-200"
                     disabled={isUploading}
                   />
                   {isUploading && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">
                           {uploadProgress < 100
                             ? "Reading file..."
                             : "Processing file..."}
                         </span>
-                        <span className="font-medium">{uploadProgress}%</span>
+                        <span className="font-medium text-blue-700 dark:text-blue-300">
+                          {uploadProgress}%
+                        </span>
                       </div>
-                      <Progress value={uploadProgress} className="h-2" />
+                      <Progress
+                        value={uploadProgress}
+                        className="h-2 bg-blue-200 dark:bg-blue-800 [&>*]:bg-blue-600 dark:[&>*]:bg-blue-400"
+                      />
                     </div>
                   )}
                   {formState.file && !isUploading && (
-                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg shadow-sm">
                       <div className="flex items-start gap-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                          <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div className="flex-1 space-y-1">
-                          <div className="font-medium text-green-900">
+                          <div className="font-medium text-blue-900 dark:text-blue-100">
                             {formState.file.name}
                           </div>
-                          <div className="text-sm text-green-700">
+                          <div className="text-sm text-blue-700 dark:text-blue-300">
                             Size: {formatFileSize(formState.file.size)} • Type:{" "}
                             {getMimeType(formState.file.name)}
                           </div>
-                          <div className="text-xs text-green-600">
+                          <div className="text-xs text-blue-600 dark:text-blue-400">
                             Extension:{" "}
-                            <code className="bg-green-100 px-1 rounded">
+                            <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded text-blue-800 dark:text-blue-200">
                               {"." + getFileExtension(formState.file.name)}
                             </code>
                           </div>
@@ -874,22 +985,26 @@ export default function SopPageEnhanced() {
               </div>
             </div>
             {editingSop && (
-              <div className="grid gap-3">
+              <div className="grid gap-3 mt-4">
+                {" "}
+                {/* Added margin top */}
                 <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   SOP ID
                 </Label>
-                <div className="p-3 bg-gray-50 border rounded-lg">
-                  <code className="text-sm font-mono text-gray-700">
+                <div className="p-3 bg-muted/50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  {" "}
+                  {/* Styled ID display */}
+                  <code className="text-sm font-mono text-muted-foreground">
                     {editingSop.sopId}
                   </code>
                 </div>
               </div>
             )}
-            <DialogFooter className="gap-3 pt-4">
+            <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
               <Button
                 variant="outline"
-                className="cursor-pointer"
+                className="cursor-pointer bg-transparent border border-gray-300 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
                 onClick={handleCancel}
                 size="lg"
               >
@@ -904,7 +1019,7 @@ export default function SopPageEnhanced() {
                   isUploading
                 }
                 size="lg"
-                className="bg-primary cursor-pointer"
+                className="bg-primary hover:bg-primary/90 text-white rounded-lg transition-all duration-200"
               >
                 Update SOP
               </Button>

@@ -1,66 +1,32 @@
 const express = require("express");
-const cors = require("cors");
-const jwt = require("jsonwebtoken");
-const bodyParser = require("body-parser");
-
+const fetch = require("node-fetch"); // Use node-fetch v2 for CommonJS
 const app = express();
-const PORT = 4000;
-const ACCESS_SECRET = "access_secret_key";
-const REFRESH_SECRET = "refresh_secret_key";
+const PORT = 3001;
 
-app.use(cors());
-app.use(bodyParser.json());
+app.get("/api/view-pdf", async (req, res) => {
+  const fileUrl = req.query.url;
 
-const dummyUser = {
-  email: "test@gmail.com",
-  password: "password123",
-};
-
-let refreshTokens = []; // store issued refresh tokens
-
-// Generate Access Token
-const generateAccessToken = (user) => {
-  return jwt.sign(user, ACCESS_SECRET, { expiresIn: "15m" }); // short expiry
-};
-
-// Generate Refresh Token
-const generateRefreshToken = (user) => {
-  const refreshToken = jwt.sign(user, REFRESH_SECRET, { expiresIn: "7d" });
-  refreshTokens.push(refreshToken);
-  return refreshToken;
-};
-
-// Login endpoint
-app.post("/identity/login", (req, res) => {
-  const { email, password } = req.body;
-
-  if (email === dummyUser.email && password === dummyUser.password) {
-    const user = { email };
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    return res.json({ accessToken, refreshToken });
+  if (!fileUrl) {
+    return res.status(400).send("Missing 'url' query parameter");
   }
 
-  return res.status(401).json({ message: "Invalid credentials" });
-});
+  try {
+    const response = await fetch(fileUrl);
 
-// Refresh token endpoint
-app.post("/api/refresh-token", (req, res) => {
-  const { token } = req.body;
+    if (!response.ok) {
+      return res.status(response.status).send("Failed to fetch file");
+    }
 
-  if (!token) return res.status(401).json({ message: "Token required" });
-  if (!refreshTokens.includes(token))
-    return res.status(403).json({ message: "Invalid refresh token" });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline; filename=preview.pdf");
 
-  jwt.verify(token, REFRESH_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: "Token expired" });
-
-    const newAccessToken = generateAccessToken({ email: user.email });
-    res.json({ accessToken: newAccessToken });
-  });
+    response.body.pipe(res); // Stream the response to client
+  } catch (error) {
+    console.error("Proxy error:", error);
+    res.status(500).send("Server error while fetching file");
+  }
 });
 
 app.listen(PORT, () => {
-  console.log(`Auth server running on http://localhost:${PORT}`);
+  console.log(`Server is running at http://localhost:${PORT}`);
 });
