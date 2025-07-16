@@ -1,119 +1,206 @@
 "use client";
-
-import React, { useState, useEffect, useRef } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { MdOutlineManageSearch } from "react-icons/md";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MdPersonSearch } from "react-icons/md";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/utils/cn";
+import { UserService } from "@/api/services/UserService";
+import type { UserListVM } from "@/api/models/UserListVM";
 
 interface Person {
+  id: string;
   name: string;
   title: string;
   image?: string;
+  level: number;
+  parentId?: string;
 }
 
-const PersonCard = React.forwardRef<
-  HTMLDivElement,
-  Person & { isHighlighted?: boolean }
->(({ name, title, image, isHighlighted }, ref) => (
-  <Card
-    ref={ref}
-    className={cn(
-      "text-center w-28 sm:w-32 p-2 sm:p-2 shadow-md bg-white dark:bg-slate-900 transition-transform duration-500",
-      isHighlighted ? "scale-110 ring-2 ring-blue-500" : ""
-    )}
-  >
-    <Avatar className="mx-auto mb-1 h-8 w-8">
-      {image ? (
-        <AvatarImage src={image} />
-      ) : (
-        <AvatarFallback className="bg-gray-100 text-gray-700 text-[10px]">
-          {name
-            .split(" ")
-            .map((w) => w[0])
-            .join("")}
-        </AvatarFallback>
-      )}
-    </Avatar>
-    <h4 className="font-semibold text-xs">{name}</h4>
-    <p className="text-[10px] text-primary">{title}</p>
-  </Card>
-));
-PersonCard.displayName = "PersonCard";
+const getFullName = (user: UserListVM): string => {
+  const firstName = user.firstName?.trim() || "";
+  const lastName = user.lastName?.trim() || "";
+  if (firstName && lastName) {
+    return `${firstName} ${lastName}`;
+  } else if (firstName) {
+    return firstName;
+  } else if (lastName) {
+    return lastName;
+  } else {
+    return user.userName || user.email || "Unknown User";
+  }
+};
 
-const CardWithConnector = ({
+const getInitials = (fullName: string): string => {
+  return fullName
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+const PersonCard = ({
   person,
-  lineHeight = 12,
-  refMap,
-  highlightName,
+  isHighlighted,
+  refEl,
+  isCEO = false,
 }: {
   person: Person;
-  lineHeight?: number;
-  refMap: React.RefObject<Record<string, HTMLDivElement | null>>;
-  highlightName: string;
+  isHighlighted: boolean;
+  refEl?: (el: HTMLDivElement | null) => void;
+  isCEO?: boolean;
 }) => (
-  <div className="relative flex flex-col items-center">
-    <PersonCard
-      ref={(el) => (refMap.current[person.name] = el)}
-      {...person}
-      isHighlighted={highlightName === person.name}
-    />
-    <div
-      className="absolute top-full left-1/2 w-px bg-gray-300"
-      style={{ height: `${lineHeight * 4}px`, transform: "translateX(-50%)" }}
-    />
-  </div>
+  <Card
+    ref={refEl}
+    className={cn(
+      "relative bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border-2 transition-all duration-300 hover:shadow-lg",
+      "w-28 sm:w-32 p-2 sm:p-3",
+      isCEO
+        ? "border-amber-400 shadow-amber-100 dark:shadow-amber-900/20"
+        : "border-gray-200 dark:border-slate-700",
+      isHighlighted
+        ? "scale-110 ring-2 ring-blue-500 shadow-xl border-blue-400"
+        : "",
+      "hover:scale-105"
+    )}
+  >
+    {isCEO && (
+      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+        <div className="bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full text-xs font-bold">
+          CEO
+        </div>
+      </div>
+    )}
+    <div className="text-center">
+      <Avatar
+        className={cn(
+          "mx-auto mb-1 border-2",
+          isCEO
+            ? "h-10 w-10 sm:h-12 sm:w-12 border-amber-400"
+            : "h-8 w-8 sm:h-10 sm:w-10 border-gray-300 dark:border-slate-600"
+        )}
+      >
+        {person.image ? (
+          <AvatarImage src={person.image || "/placeholder.svg"} />
+        ) : (
+          <AvatarFallback
+            className={cn(
+              "text-[10px] sm:text-xs font-semibold",
+              isCEO
+                ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                : "bg-blue-100 text-primary dark:bg-blue-900 dark:text-blue-200"
+            )}
+          >
+            {getInitials(person.name)}
+          </AvatarFallback>
+        )}
+      </Avatar>
+      <h4 className="font-semibold text-md text-gray-900 dark:text-gray-100 mb-1 leading-tight truncate">
+        {person.name}
+      </h4>
+      <p
+        className={cn(
+          "text-sm font-medium truncate",
+          isCEO
+            ? "text-amber-600 dark:text-amber-400"
+            : "text-primary dark:text-blue-400"
+        )}
+      >
+        {person.title}
+      </p>
+    </div>
+  </Card>
 );
 
-export const OrgChart = () => {
+const OrgChart = () => {
   const chartRef = useRef<HTMLDivElement>(null);
   const refMap = useRef<Record<string, HTMLDivElement | null>>({});
   const [zoom, setZoom] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [highlightName, setHighlightName] = useState("");
   const [showSearch, setShowSearch] = useState(false);
+  const [users, setUsers] = useState<UserListVM[]>([]);
+  const [orgData, setOrgData] = useState<Person[]>([]);
 
-  const allPeople: Person[] = [
-    { name: "Person 1", title: "Founder & CEO" },
-    { name: "Person 2", title: "Director of Finance" },
-    { name: "Person 3", title: "Director of Product" },
-    { name: "Person 4", title: "Senior Accountant" },
-    { name: "Person 5", title: "Business Data Analyst" },
-    { name: "Person 6", title: "Product Manager" },
-    { name: "A1", title: "Account Assistant 1" },
-    { name: "A2", title: "Account Assistant 2" },
-    { name: "A3", title: "Account Intern" },
-    { name: "A4", title: "Account Intern" },
-    { name: "A5", title: "Account Intern" },
-    { name: "B1", title: "Data Analyst 1" },
-    { name: "B2", title: "Data Analyst 2" },
-    { name: "B3", title: "Data Intern" },
-    { name: "B4", title: "Data Intern" },
-    { name: "B5", title: "Data Intern" },
-    { name: "C1", title: "UX Designer" },
-    { name: "C2", title: "UI Developer" },
-    { name: "C3", title: "QA Tester" },
-    { name: "C4", title: "QA Tester" },
-    { name: "C5", title: "QA Tester" },
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await UserService.getApiVUser("1");
+        const userList = response.data || [];
+        setUsers(userList);
+        if (userList.length > 0) {
+          const ceo = userList[0];
+          const directors = userList.slice(1, 3);
+          const managers = userList.slice(3, 6);
+          const employees = userList.slice(6);
+
+          const hierarchicalData: Person[] = [
+            {
+              id: ceo.userID || "ceo",
+              name: getFullName(ceo),
+              title: "Chief Executive Officer",
+              level: 0,
+            },
+            ...directors.map((user, index) => ({
+              id: user.userID || `director-${index}`,
+              name: getFullName(user),
+              title:
+                index === 0 ? "Director of Finance" : "Director of Product",
+              level: 1,
+              parentId: ceo.userID || "ceo",
+            })),
+            ...managers.map((user, index) => ({
+              id: user.userID || `manager-${index}`,
+              name: getFullName(user),
+              title:
+                index === 0
+                  ? "Senior Accountant"
+                  : index === 1
+                  ? "Business Data Analyst"
+                  : "Product Manager",
+              level: 2,
+              parentId: directors[index % 2]?.userID || `director-${index % 2}`,
+            })),
+            ...employees.map((user, index) => ({
+              id: user.userID || `employee-${index}`,
+              name: getFullName(user),
+              title: "Employee",
+              level: 3,
+              parentId: managers[index % 3]?.userID || `manager-${index % 3}`,
+            })),
+          ];
+          setOrgData(hierarchicalData);
+        } else {
+          setOrgData([]);
+        }
+      } catch (err) {
+        console.error("Error fetching users", err);
+        setOrgData([]); // Set to empty array on error to show loading message or empty state
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const handleSelect = (name: string) => {
     setSearchTerm(name);
     setHighlightName(name);
     setShowSearch(false);
-
     const el = refMap.current[name];
     if (el && chartRef.current) {
-      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+      el.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
     }
-
     setTimeout(() => setHighlightName(""), 4000);
   };
 
@@ -126,12 +213,10 @@ export const OrgChart = () => {
         );
       }
     };
-
     const container = chartRef.current;
     if (container) {
       container.addEventListener("wheel", handleWheel, { passive: false });
     }
-
     return () => {
       if (container) {
         container.removeEventListener("wheel", handleWheel);
@@ -139,169 +224,284 @@ export const OrgChart = () => {
     };
   }, []);
 
+  const ceo = orgData.find((p) => p.level === 0);
+  const directors = orgData.filter((p) => p.level === 1);
+  const managers = orgData.filter((p) => p.level === 2);
+  const employees = orgData.filter((p) => p.level === 3);
+
+  const employeesByManager: Record<string, Person[]> = {};
+  employees.forEach((employee) => {
+    if (employee.parentId) {
+      if (!employeesByManager[employee.parentId]) {
+        employeesByManager[employee.parentId] = [];
+      }
+      employeesByManager[employee.parentId].push(employee);
+    }
+  });
+
+  const managersByDirector: Record<string, Person[]> = {};
+  managers.forEach((manager) => {
+    if (manager.parentId) {
+      if (!managersByDirector[manager.parentId]) {
+        managersByDirector[manager.parentId] = [];
+      }
+      managersByDirector[manager.parentId].push(manager);
+    }
+  });
+
+  const CARD_WIDTH = 128;
+  const GAP_40 = 160;
+  const GAP_20 = 80;
+  const GAP_4 = 16;
+
+  const VERTICAL_LINE_SEGMENT_XL = 65;
+  const VERTICAL_LINE_SEGMENT_LG = 48;
+
   return (
-    <div className="overflow-auto w-full h-full relative space-y-4 p-4">
-
-      {/* Search + Zoom Buttons */}
-      <div className="fixed top-16 right-4 z-50">
-        <div className="flex items-center gap-2">
-
-          {/* Search Button */}
-          <button
-            onClick={() => setShowSearch((prev) => !prev)}
-            className="p-2 rounded-full bg-muted hover:bg-muted/70 transition"
-          >
-            <MdOutlineManageSearch />
-          </button>
-
-          {/* Zoom In */}
-          <button
-            onClick={() => setZoom((z) => Math.min(z + 0.1, 1.5))}
-            className="p-2 rounded-full bg-muted hover:bg-muted/70 transition text-lg font-bold"
-          >
-            +
-          </button>
-
-          {/* Zoom Out */}
-          <button
-            onClick={() => setZoom((z) => Math.max(z - 0.1, 0.3))}
-            className="p-2 rounded-full bg-muted hover:bg-muted/70 transition text-lg font-bold"
-          >
-            −
-          </button>
-
-          {/* Search Dropdown */}
-          {showSearch && (
-            <Command className="w-[250px] border rounded-lg bg-white dark:bg-slate-900 shadow-lg">
-              <CommandInput
-                placeholder="Search employees..."
-                value={searchTerm}
-                onValueChange={setSearchTerm}
-              />
-              {searchTerm.length > 0 && (
-                <>
-                  <CommandEmpty>No results found.</CommandEmpty>
-                  <CommandGroup heading="Employees">
-                    {allPeople
-                      .filter((p) =>
-                        p.name.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((person) => (
-                        <CommandItem
-                          key={person.name}
-                          value={person.name}
-                          onSelect={() => handleSelect(person.name)}
-                        >
-                          {person.name}
-                        </CommandItem>
-                      ))}
-                  </CommandGroup>
-                </>
-              )}
-            </Command>
-          )}
-        </div>
-      </div>
-
-      {/* Org Chart */}
+    <div className="overflow-auto w-full h-full relative dark:from-slate-900 dark:to-slate-800">
       <div
         ref={chartRef}
-        className="min-w-max origin-top transition-transform"
+        className="min-w-max origin-top transition-transform duration-300"
         style={{ transform: `scale(${zoom})` }}
       >
-        <div className="flex flex-col items-center gap-10 relative p-4 sm:p-10">
-          <CardWithConnector
-            person={{ name: "Person 1", title: "Founder & CEO" }}
-            lineHeight={10}
-            refMap={refMap}
-            highlightName={highlightName}
-          />
-
-          <div className="relative flex justify-center gap-160 items-start">
-            <div className="absolute top-0 left-1/2 w-[800px] h-px bg-gray-300 -translate-x-1/2" />
-            <CardWithConnector
-              person={{ name: "Person 2", title: "Director of Finance" }}
-              lineHeight={10}
-              refMap={refMap}
-              highlightName={highlightName}
-            />
-            <CardWithConnector
-              person={{ name: "Person 3", title: "Director of Product" }}
-              lineHeight={10}
-              refMap={refMap}
-              highlightName={highlightName}
-            />
+        <div className="fixed top-16 right-4 z-50">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSearch((prev) => !prev)}
+              className="p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+              title="Search employees"
+            >
+              <MdPersonSearch size={18} />
+            </button>
+            <button
+              onClick={() => setZoom((z) => Math.min(z + 0.1, 1.5))}
+              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors text-lg font-bold"
+              title="Zoom in"
+            >
+              +
+            </button>
+            <button
+              onClick={() => setZoom((z) => Math.max(z - 0.1, 0.3))}
+              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors text-lg font-bold"
+              title="Zoom out"
+            >
+              −
+            </button>
+            {showSearch && (
+              <div className="absolute top-full right-0 mt-2">
+                <Command className="w-[280px] border rounded-lg bg-white dark:bg-slate-800 shadow-xl">
+                  <CommandInput
+                    placeholder="Search employees..."
+                    value={searchTerm}
+                    onValueChange={setSearchTerm}
+                  />
+                  <CommandList>
+                    <CommandGroup
+                      heading="Employees"
+                      className="max-h-48 overflow-y-auto"
+                    >
+                      {orgData
+                        .filter((p) =>
+                          p.name
+                            .toLowerCase()
+                            .includes(searchTerm.toLowerCase())
+                        )
+                        .map((person) => (
+                          <CommandItem
+                            key={person.id}
+                            value={person.name}
+                            onSelect={() => handleSelect(person.name)}
+                            className="cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarFallback className="text-xs">
+                                  {getInitials(person.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              {person.name}
+                            </div>
+                          </CommandItem>
+                        ))}
+                    </CommandGroup>
+                    <CommandEmpty>No employees found</CommandEmpty>
+                  </CommandList>
+                </Command>
+              </div>
+            )}
           </div>
-
-          <div className="relative flex justify-center gap-20 items-start">
-            <div className="absolute top-0 left-1/2 w-[1500px] h-px bg-gray-300 -translate-x-1/2" />
-
-            {/* Finance */}
-            <div className="flex flex-col items-center gap-4 relative">
-              <CardWithConnector
-                person={{ name: "Person 4", title: "Senior Accountant" }}
-                lineHeight={4}
-                refMap={refMap}
-                highlightName={highlightName}
+        </div>
+        <div className="flex flex-col items-center py-8 px-4 min-h-screen">
+          {/* CEO Level */}
+          {ceo && (
+            <div className="relative flex flex-col items-center mb-[64px]">
+              {" "}
+              <PersonCard
+                person={ceo}
+                isHighlighted={highlightName === ceo.name}
+                refEl={(el) => (refMap.current[ceo.name] = el)}
+                isCEO={true}
               />
-              <div className="relative flex gap-4">
-                <div className="absolute top-0 left-1/2 w-[600px] h-px bg-gray-300 -translate-x-1/2" />
-                {["A1", "A2", "A3", "A4", "A5"].map((name) => (
-                  <PersonCard
-                    key={name}
-                    name={name}
-                    title="Account Assistant"
-                    ref={(el) => (refMap.current[name] = el)}
-                    isHighlighted={highlightName === name}
-                  />
-                ))}
+              {directors.length > 0 && (
+                <div
+                  className="absolute top-full left-1/2 w-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2"
+                  style={{ height: `${VERTICAL_LINE_SEGMENT_XL}px` }}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Directors Level */}
+          {directors.length > 0 && (
+            <div className="relative mb-[64px]">
+              {" "}
+              {/* Total vertical space below Directors cards */}
+              {/* Horizontal connector line for directors */}
+              <div
+                className="absolute left-1/2 h-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2 top-30px"
+                style={{
+                  // Position at half the total vertical space
+                  width: `${(directors.length - 1) * (CARD_WIDTH + GAP_40)}px`,
+                }}
+              />
+              <div
+                className="flex justify-center gap-40"
+                style={{ paddingTop: `${VERTICAL_LINE_SEGMENT_XL}px` }}
+              >
+                {" "}
+                {/* pt pushes cards down from horizontal line */}
+                {directors.map((director) => {
+                  const managerChildren =
+                    managersByDirector[director.id]?.length || 0;
+                  return (
+                    <div
+                      key={director.id}
+                      className="relative flex flex-col items-center"
+                    >
+                      {/* Vertical line from horizontal line to director card */}
+                      <div
+                        className="absolute bottom-full left-1/2 w-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2"
+                        style={{ height: `${VERTICAL_LINE_SEGMENT_XL}px` }}
+                      />
+                      <PersonCard
+                        person={director}
+                        isHighlighted={highlightName === director.name}
+                        refEl={(el) => (refMap.current[director.name] = el)}
+                      />
+                      {managerChildren > 0 && (
+                        <div
+                          className="absolute top-full left-1/2 w-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2"
+                          style={{ height: `${VERTICAL_LINE_SEGMENT_XL}px` }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
+          )}
 
-            {/* Data */}
-            <div className="flex flex-col items-center gap-4 relative">
-              <CardWithConnector
-                person={{ name: "Person 5", title: "Business Data Analyst" }}
-                lineHeight={4}
-                refMap={refMap}
-                highlightName={highlightName}
-              />
-              <div className="relative flex gap-4">
-                <div className="absolute top-0 left-1/2 w-[600px] h-px bg-gray-300 -translate-x-1/2" />
-                {["B1", "B2", "B3", "B4", "B5"].map((name) => (
-                  <PersonCard
-                    key={name}
-                    name={name}
-                    title="Data Intern"
-                    ref={(el) => (refMap.current[name] = el)}
-                    isHighlighted={highlightName === name}
-                  />
-                ))}
+          {/* Managers Level */}
+          {managers.length > 0 && (
+            <div className="relative mb-[48px]">
+              {" "}
+              {/* Total vertical space below Managers cards */}
+              {/* Horizontal connector line for managers */}
+              <div className="absolute left-1/2 h-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2 top-30px w-248 " />
+              <div
+                className="flex justify-center gap-92"
+                style={{ paddingTop: `${VERTICAL_LINE_SEGMENT_XL}px` }}
+              >
+                {" "}
+                {/* pt pushes cards down from horizontal line */}
+                {managers.map((manager) => {
+                  const employeeChildren =
+                    employeesByManager[manager.id]?.length || 0;
+                  return (
+                    <div
+                      key={manager.id}
+                      className="relative flex flex-col items-center"
+                    >
+                      {/* Vertical line from horizontal line to manager card */}
+                      <div
+                        className="absolute bottom-full left-1/2 w-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2"
+                        style={{ height: `${VERTICAL_LINE_SEGMENT_XL}px` }}
+                      />
+                      <PersonCard
+                        person={manager}
+                        isHighlighted={highlightName === manager.name}
+                        refEl={(el) => (refMap.current[manager.name] = el)}
+                      />
+                      {employeeChildren > 0 && (
+                        <div
+                          className="absolute top-full left-1/2 w-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2"
+                          style={{ height: `${VERTICAL_LINE_SEGMENT_LG}px` }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
+          )}
 
-            {/* Product */}
-            <div className="flex flex-col items-center gap-4 relative">
-              <CardWithConnector
-                person={{ name: "Person 6", title: "Product Manager" }}
-                lineHeight={4}
-                refMap={refMap}
-                highlightName={highlightName}
-              />
-              <div className="relative flex gap-4">
-                <div className="absolute top-0 left-1/2 w-[600px] h-px bg-gray-300 -translate-x-1/2" />
-                {["C1", "C2", "C3", "C4", "C5"].map((name) => (
-                  <PersonCard
-                    key={name}
-                    name={name}
-                    title="QA Tester"
-                    ref={(el) => (refMap.current[name] = el)}
-                    isHighlighted={highlightName === name}
-                  />
-                ))}
+          {/* Employees Level */}
+          {managers.length > 0 && (
+            <div className="flex justify-center gap-20">
+              {managers.map((manager) => {
+                const managerEmployees = employeesByManager[manager.id] || [];
+                if (managerEmployees.length === 0) return null;
+                return (
+                  <div
+                    key={manager.id}
+                    className="flex flex-col items-center relative"
+                  >
+                    {/* Horizontal line for employees under this manager */}
+                    <div
+                      className="absolute left-1/2 h-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2 top-32px"
+                      style={{
+                        // Position at half the total vertical space
+                        width: `${
+                          (managerEmployees.length - 1) * (CARD_WIDTH + GAP_4)
+                        }px`,
+                      }}
+                    />
+                    <div
+                      className="flex gap-4"
+                      style={{ paddingTop: `${VERTICAL_LINE_SEGMENT_LG}px` }}
+                    >
+                      {" "}
+                      {/* pt pushes cards down from horizontal line */}
+                      {managerEmployees.map((employee) => (
+                        <div
+                          key={employee.id}
+                          className="relative flex flex-col items-center"
+                        >
+                          {/* Vertical line from horizontal line to employee card */}
+                          <div
+                            className="absolute bottom-full left-1/2 w-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2"
+                            style={{ height: `${VERTICAL_LINE_SEGMENT_LG}px` }}
+                          />
+                          <PersonCard
+                            person={employee}
+                            isHighlighted={highlightName === employee.name}
+                            refEl={(el) => (refMap.current[employee.name] = el)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {orgData.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-gray-500 dark:text-gray-400 text-lg">
+                Loading organization chart...
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

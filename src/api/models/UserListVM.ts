@@ -2,10 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type CreateUserCommand = {
+export type UserListVM = {
+  userID?: string | null;
   email?: string | null;
   userName?: string | null;
-  password?: string | null;
   firstName?: string | null;
   lastName?: string | null;
+  isActive?: boolean;
+  createdDate?: string;
 };

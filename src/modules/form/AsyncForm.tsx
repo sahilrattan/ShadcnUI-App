@@ -1,11 +1,11 @@
 import React from "react";
-import { Form } from 'react-final-form';
-import { Schema } from 'yup';
-import type{FormProps, FormRenderProps} from 'react-final-form'
+import { Form } from "react-final-form";
+import { Schema } from "yup";
+import type { FormProps, FormRenderProps } from "react-final-form";
 
 export type AsyncFormProps = Omit<
   FormProps,
-  'render' | 'component' | 'children'
+  "render" | "component" | "children"
 > & {
   name: string;
   ValidationSchema?: Schema;
@@ -24,16 +24,18 @@ const AsyncForm: React.FC<AsyncFormProps> = ({
   const handleValidate = React.useCallback(
     async (values: { [key: string]: any }) => {
       try {
-        const newValues = transformValues ? transformValues(values) : { ...values };
+        const newValues = transformValues
+          ? transformValues(values)
+          : { ...values };
         if (ValidationSchema) {
           try {
             await ValidationSchema.validate(newValues, {
               context: { ...values, ...newValues },
-              abortEarly: false, 
+              abortEarly: false,
             });
             return {};
           } catch (err) {
-            if (err.name === 'ValidationError') {
+            if (err.name === "ValidationError") {
               const errors: Record<string, string> = {};
               err.inner.forEach((error: { path: string; message: string }) => {
                 errors[error.path] = error.message;
@@ -45,7 +47,7 @@ const AsyncForm: React.FC<AsyncFormProps> = ({
         }
         return {};
       } catch (err) {
-        console.error('Validation error:', err);
+        console.error("Validation error:", err);
         return {};
       }
     },
@@ -53,12 +55,7 @@ const AsyncForm: React.FC<AsyncFormProps> = ({
   );
 
   return (
-    <Form
-      name={name}
-      onSubmit={onSubmit}
-      validate={handleValidate}
-      {...rest}
-    >
+    <Form name={name} onSubmit={onSubmit} validate={handleValidate} {...rest}>
       {(formProps) => (
         <form onSubmit={formProps.handleSubmit} noValidate>
           {children(formProps)}

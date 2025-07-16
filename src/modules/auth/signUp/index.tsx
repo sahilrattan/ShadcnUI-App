@@ -1,208 +1,200 @@
 "use client";
 
-import { useCallback } from "react";
-// import { Trans } from "@lingui/react";
-import AsyncForm from "../../form/AsyncForm";
-import TextInputField from "../../form/formInputs/TextInputFiled";
-import PhoneNumberInput from "../../form/formInputs/PhoneNumberInput";
-import validationSchema from "./validationSchema";
-import { Button } from "@/components/ui/button";
-import PasswordInput from "@/modules/form/formInputs/PasswordField";
-import SelectField from "@/modules/form/formInputs/SelectField";
+import { useCallback, useState } from "react";
+import { Form, Field } from "react-final-form";
 import { useNavigate } from "react-router-dom";
-import TextareaField from "@/modules/form/formInputs/TextAreaField";
-import { DateOfBirthField } from "@/modules/form/formInputs/DateOfBirthField";
 import { i18n } from "@lingui/core";
-import ImageUpload from "@/modules/form/formInputs/ImageUpload";
+import { UserService } from "@/api/services/UserService";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
+import validationSchema from "./validationSchema";
+
+const required = (value: any) => (value ? undefined : "Required");
+
 const SignUpForm = () => {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = useCallback(async (values) => {
-    console.log("Form submitted with values:", values);
-  }, []);
+  const handleSubmit = useCallback(
+    async (values: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      password: string;
+    }) => {
+      try {
+        await UserService.postApiVUser("1", {
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          password: values.password,
+          userName: values.email,
+        });
 
-  const handleToggleToSignIn = () => {
-    navigate("/signin");
-  };
+        toast.success("User registered successfully!");
+        navigate("/signin");
+      } catch (error: any) {
+        console.error("Signup error:", error);
+        toast.error(
+          i18n.t({
+            id: "ui.Signup failure",
+            message: "Failed to register user: ",
+          }) + (error?.message ?? "")
+        );
+      }
+    },
+    [navigate]
+  );
 
   return (
-    <AsyncForm
-      name="SignUpForm"
-      onSubmit={handleSubmit}
-      ValidationSchema={validationSchema}
-    >
-      {(formProps) => (
-        <div className="w-full max-w-md mx-auto mt-10 px-6 py-8 rounded-xl  dark:bg-zinc-900  space-y-6 bg-[var(--color-card)] text-[var(--color-card-foreground)] border border-[var(--color-border)] shadow-md">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-primary">
+    <div className="w-full max-w-md mx-auto mt-10 px-6 py-8 rounded-xl  dark:bg-zinc-900  space-y-6 bg-[var(--color-card)] text-[var(--color-card-foreground)] border border-[var(--color-border)] shadow-md">
+      <h2 className="text-2xl font-semibold text-center text-primary mb-6">
+        {i18n.t({ id: "ui.Sign Up", message: "Sign Up" })}
+      </h2>
+
+      <Form
+        onSubmit={handleSubmit}
+        render={({ handleSubmit, submitting }) => (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  First Name
+                </label>
+                <Field name="firstName" validate={required}>
+                  {({ input, meta }) => (
+                    <>
+                      <input
+                        {...input}
+                        type="text"
+                        placeholder="First Name"
+                        className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      />
+                      {meta.touched && meta.error && (
+                        <span className="text-sm text-red-500">
+                          {meta.error}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Field>
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Last Name
+                </label>
+                <Field name="lastName" validate={required}>
+                  {({ input, meta }) => (
+                    <>
+                      <input
+                        {...input}
+                        type="text"
+                        placeholder="Last Name"
+                        className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      />
+                      {meta.touched && meta.error && (
+                        <span className="text-sm text-red-500">
+                          {meta.error}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Field>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-1">Email</label>
+              <Field name="email" validate={required}>
+                {({ input, meta }) => (
+                  <>
+                    <input
+                      {...input}
+                      type="email"
+                      placeholder="email@example.com"
+                      className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    />
+                    {meta.touched && meta.error && (
+                      <span className="text-sm text-red-500">{meta.error}</span>
+                    )}
+                  </>
+                )}
+              </Field>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-1">Password</label>
+              <Field name="password" validate={required}>
+                {({ input, meta }) => (
+                  <div className="relative">
+                    <input
+                      {...input}
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="w-full h-10 rounded-md border border-gray-300 px-3 py-2 text-sm pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                    {meta.touched && meta.error && (
+                      <span className="text-sm text-red-500">{meta.error}</span>
+                    )}
+                  </div>
+                )}
+              </Field>
+            </div>
+
+            <div className="relative text-center text-sm after:border-t after:absolute after:inset-x-0 after:top-1/2 after:z-0">
+              <span className="relative z-10 px-2 bg-background text-muted-foreground">
+                {i18n.t({
+                  id: "ui.or continue with",
+                  message: "or continue with",
+                })}
+              </span>
+            </div>
+
+            <div className="flex justify-center">
+              <Button variant="outline" type="button" className="w-50">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path
+                    d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <span className="sr-only">Login with Google</span>
+              </Button>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="w-full h-10 bg-primary  rounded-md  transition-colors"
+            >
               {i18n.t({ id: "ui.Sign Up", message: "Sign Up" })}
-            </h2>
-          </div>
+            </Button>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="FirstName"
-                className="text-sm font-medium text-foreground mb-1"
-              >
-                {i18n.t({ id: "ui.First Name", message: "First Name" })}
-              </label>
-              <TextInputField
-                id="firstName"
-                name="firstName"
-                placeholder={i18n.t({
-                  id: "ui.First Name",
-                  message: "First Name",
-                })}
-                type="text"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="LastName"
-                className="text-sm font-medium text-foreground mb-1"
-              >
-                {i18n.t({ id: "ui.Last Name", message: "Last Name" })}
-              </label>
-              <TextInputField
-                id="lastName"
-                name="lastName"
-                placeholder={i18n.t({
-                  id: "ui.Last Name",
-                  message: "Last Name",
-                })}
-                type="text"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className="text-sm font-medium text-foreground block"
-            >
-              {i18n.t({ id: "Email", message: "Email" })}
-            </label>
-            <TextInputField
-              id="email"
-              name="email"
-              placeholder="email@example.com"
-              type="email"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="phone"
-              className="text-sm font-medium text-foreground mb-1 block"
-            >
-              {i18n.t({ id: "ui.Phone Number", message: "Phone Number" })}
-            </label>
-            <PhoneNumberInput
-              id="phone"
-              name="phone"
-              placeholder={i18n.t({
-                id: "ui.Phone Number",
-                message: "Phone Number",
-              })}
-              type="tel"
-            />
-          </div>
-          <div>
-            <DateOfBirthField name="dob" />
-          </div>
-          <div>
-            <label
-              htmlFor="gender"
-              className="text-sm font-medium text-foreground mb-1  block"
-            >
-              {i18n.t({ id: "ui.Gender", message: "Gender" })}
-            </label>
-            <SelectField
-              name="gender"
-              placeholder={i18n.t({
-                id: "ui.Select a Gender",
-                message: "Select a Gender",
-              })}
-              options={[
-                { label: "Male", value: "male" },
-                { label: "Female", value: "female" },
-                { label: "Other", value: "other" },
-              ]}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="phone"
-              className="text-sm font-medium text-foreground mb-1 block "
-            >
-              {i18n.t({ id: "ui.Password", message: "Password" })}
-            </label>
-
-            <PasswordInput name="password" />
-          </div>
-          <div>
-            <label
-              htmlFor="ImageUpload"
-              className="text-sm font-medium text-foreground mb-1 block "
-            >
-              Image
-            </label>
-            <ImageUpload />
-          </div>
-          <div>
-            <label
-              htmlFor="textarea"
-              className="text-sm font-medium text-foreground mb-1 block"
-            >
-              {i18n.t({ id: "ui.Text", message: "Text" })}
-            </label>
-            <TextareaField label="text" name="textarea" />
-          </div>
-
-          <div className="relative text-center text-sm after:border-t after:absolute after:inset-x-0 after:top-1/2 after:z-0">
-            <span className="relative z-10 px-2 bg-background text-muted-foreground">
+            <div className="text-center text-sm text-gray-600 mt-4">
               {i18n.t({
-                id: "ui.or continue with",
-                message: "or continue with",
-              })}
-            </span>
-          </div>
-
-          <div className="flex justify-center">
-            <Button variant="outline" type="button" className="w-50">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path
-                  d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                  fill="currentColor"
-                />
-              </svg>
-              <span className="sr-only">Login with Google</span>
-            </Button>
-          </div>
-
-          <div>
-            <Button type="submit" className=" w-full">
-              {i18n.t({ id: "ui.Sign Up", message: "Sign Up" })}
-            </Button>
-          </div>
-
-          <div className="text-center text-sm text-foreground mt-4">
-            {i18n.t({
-              id: "ui.Already have an account?",
-              message: "Already have an account?",
-            })}{" "}
-            <button
-              onClick={handleToggleToSignIn}
-              className="text-primary underline cursor-pointer"
-              type="button"
-            >
-              {i18n.t({ id: "ui.Sign in", message: "Sign in" })}
-            </button>
-          </div>
-        </div>
-      )}
-    </AsyncForm>
+                id: "ui.Already have an account?",
+                message: "Already have an account?",
+              })}{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/signin")}
+                className="text-primary underline"
+              >
+                {i18n.t({ id: "ui.Sign in", message: "Sign in" })}
+              </button>
+            </div>
+          </form>
+        )}
+      />
+    </div>
   );
 };
 

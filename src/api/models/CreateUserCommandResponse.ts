@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { CreateUserDto } from "../../../api-new/models/CreateUserDto";
+import type { CreateUserDto } from "./CreateUserDto";
 export type CreateUserCommandResponse = {
   success?: boolean;
   message?: string | null;

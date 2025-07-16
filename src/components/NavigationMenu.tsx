@@ -97,7 +97,7 @@ import InstallButton from "./InstallButton";
 
 export const NavigationMenuBar = () => {
   return (
-    <div className="w-full border-b bg-background relative z-20">
+    <div className="w-full border-b bg-background relative z-50">
       <div className="container mx-auto flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <NavigationMenu className="hidden md:flex">
           <NavigationMenuList className="gap-2">
