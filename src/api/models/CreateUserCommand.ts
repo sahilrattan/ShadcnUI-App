@@ -8,4 +8,5 @@ export type CreateUserCommand = {
   password?: string | null;
   firstName?: string | null;
   lastName?: string | null;
+  phoneNumber?: number | null;
 };

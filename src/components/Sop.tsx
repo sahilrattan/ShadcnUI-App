@@ -303,10 +303,10 @@ export default function SopPageEnhanced() {
           content: fileBase64,
           category: "Sop",
           categoryId: sopId,
-          extension: extension,
-          contentType: file.type,
+          extension: `.${getFileExtension(file.name)}`, // Ensure it starts with dot
+          contentType: file.type || getMimeType(file.name), // Fallback to mime type detection
           documentFileName: file.name,
-          url: fileBase64, // This 'url' field might be redundant if 'content' is used for base64
+          // Remove the url field if not needed by the API
         };
         await DocumentsService.postApiVDocuments("1", docCmd);
       }

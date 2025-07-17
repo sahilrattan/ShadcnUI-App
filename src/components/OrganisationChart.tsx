@@ -14,14 +14,22 @@ import {
 import { cn } from "@/utils/cn";
 import { UserService } from "@/api/services/UserService";
 import type { UserListVM } from "@/api/models/UserListVM";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Person {
   id: string;
+  userID?: string | null;
   name: string;
   title: string;
   image?: string;
   level: number;
   parentId?: string;
+  email?: string | null;
 }
 
 const getFullName = (user: UserListVM): string => {
@@ -57,68 +65,133 @@ const PersonCard = ({
   isHighlighted: boolean;
   refEl?: (el: HTMLDivElement | null) => void;
   isCEO?: boolean;
-}) => (
-  <Card
-    ref={refEl}
-    className={cn(
-      "relative bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border-2 transition-all duration-300 hover:shadow-lg",
-      "w-28 sm:w-32 p-2 sm:p-3",
-      isCEO
-        ? "border-amber-400 shadow-amber-100 dark:shadow-amber-900/20"
-        : "border-gray-200 dark:border-slate-700",
-      isHighlighted
-        ? "scale-110 ring-2 ring-blue-500 shadow-xl border-blue-400"
-        : "",
-      "hover:scale-105"
-    )}
-  >
-    {isCEO && (
-      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-        <div className="bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full text-xs font-bold">
-          CEO
-        </div>
-      </div>
-    )}
-    <div className="text-center">
-      <Avatar
-        className={cn(
-          "mx-auto mb-1 border-2",
-          isCEO
-            ? "h-10 w-10 sm:h-12 sm:w-12 border-amber-400"
-            : "h-8 w-8 sm:h-10 sm:w-10 border-gray-300 dark:border-slate-600"
-        )}
-      >
-        {person.image ? (
-          <AvatarImage src={person.image || "/placeholder.svg"} />
-        ) : (
-          <AvatarFallback
-            className={cn(
-              "text-[10px] sm:text-xs font-semibold",
-              isCEO
-                ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-                : "bg-blue-100 text-primary dark:bg-blue-900 dark:text-blue-200"
-            )}
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip open={open} onOpenChange={setOpen}>
+        <TooltipTrigger asChild>
+          <div
+            onClick={() => setOpen((prev) => !prev)}
+            className="focus:outline-none"
           >
-            {getInitials(person.name)}
-          </AvatarFallback>
-        )}
-      </Avatar>
-      <h4 className="font-semibold text-md text-gray-900 dark:text-gray-100 mb-1 leading-tight truncate">
-        {person.name}
-      </h4>
-      <p
-        className={cn(
-          "text-sm font-medium truncate",
-          isCEO
-            ? "text-amber-600 dark:text-amber-400"
-            : "text-primary dark:text-blue-400"
-        )}
-      >
-        {person.title}
-      </p>
-    </div>
-  </Card>
-);
+            <Card
+              ref={refEl}
+              className={cn(
+                "relative bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border-2 transition-all duration-300 hover:shadow-lg",
+                "w-28 sm:w-32 p-2 sm:p-3",
+                isCEO
+                  ? "border-amber-400 shadow-amber-100 dark:shadow-amber-900/20"
+                  : "border-gray-200 dark:border-slate-700",
+                isHighlighted
+                  ? "scale-110 ring-2 ring-blue-500 shadow-xl border-blue-400"
+                  : "",
+                "hover:scale-105"
+              )}
+            >
+              {isCEO && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <div className="bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full text-xs font-bold">
+                    CEO
+                  </div>
+                </div>
+              )}
+              <div className="text-center">
+                <Avatar
+                  className={cn(
+                    "mx-auto mb-1 border-2",
+                    isCEO
+                      ? "h-10 w-10 sm:h-12 sm:w-12 border-amber-400"
+                      : "h-8 w-8 sm:h-10 sm:w-10 border-gray-300 dark:border-slate-600"
+                  )}
+                >
+                  {person.image ? (
+                    <AvatarImage src={person.image || "/placeholder.svg"} />
+                  ) : (
+                    <AvatarFallback
+                      className={cn(
+                        "text-[10px] sm:text-xs font-semibold",
+                        isCEO
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                          : "bg-blue-100 text-primary dark:bg-blue-900 dark:text-blue-200"
+                      )}
+                    >
+                      {getInitials(person.name)}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <h4 className="font-semibold text-sm text-gray-900  dark:text-gray-100 mb-1 leading-tight truncate">
+                  {person.name}
+                </h4>
+                <p
+                  className={cn(
+                    "text-xs font-small truncate",
+                    isCEO
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-primary dark:text-blue-400"
+                  )}
+                >
+                  {person.title}
+                </p>
+              </div>
+            </Card>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent
+          side="right"
+          className="w-70 p-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-lg rounded-lg"
+        >
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <Avatar
+                className={cn(
+                  "h-10 w-10 border-2",
+                  isCEO
+                    ? "border-amber-400"
+                    : "border-blue-300 dark:border-blue-700"
+                )}
+              >
+                {person.image ? (
+                  <AvatarImage src={person.image} />
+                ) : (
+                  <AvatarFallback
+                    className={cn(
+                      "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+                      !isCEO &&
+                        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                    )}
+                  >
+                    {getInitials(person.name)}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+
+              <div>
+                <h4 className="font-bold text-gray-900 dark:text-white">
+                  {person.name}
+                </h4>
+                <p className="text-sm text-amber-600 dark:text-amber-400">
+                  {person.title}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 dark:border-slate-700">
+              <div>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Email
+                </p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 ">
+                  {person.email ?? "N/A"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 const OrgChart = () => {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -145,20 +218,25 @@ const OrgChart = () => {
           const hierarchicalData: Person[] = [
             {
               id: ceo.userID || "ceo",
+              userID: ceo.id,
               name: getFullName(ceo),
               title: "Chief Executive Officer",
               level: 0,
+              email: ceo.email,
             },
             ...directors.map((user, index) => ({
               id: user.userID || `director-${index}`,
+              userID: user.id,
               name: getFullName(user),
               title:
                 index === 0 ? "Director of Finance" : "Director of Product",
               level: 1,
               parentId: ceo.userID || "ceo",
+              email: user.email,
             })),
             ...managers.map((user, index) => ({
               id: user.userID || `manager-${index}`,
+              userID: user.id,
               name: getFullName(user),
               title:
                 index === 0
@@ -168,13 +246,16 @@ const OrgChart = () => {
                   : "Product Manager",
               level: 2,
               parentId: directors[index % 2]?.userID || `director-${index % 2}`,
+              email: user.email,
             })),
             ...employees.map((user, index) => ({
               id: user.userID || `employee-${index}`,
+              userID: user.id,
               name: getFullName(user),
               title: "Employee",
               level: 3,
               parentId: managers[index % 3]?.userID || `manager-${index % 3}`,
+              email: user.email,
             })),
           ];
           setOrgData(hierarchicalData);
@@ -183,7 +264,7 @@ const OrgChart = () => {
         }
       } catch (err) {
         console.error("Error fetching users", err);
-        setOrgData([]); // Set to empty array on error to show loading message or empty state
+        setOrgData([]);
       }
     };
     fetchUsers();
@@ -334,8 +415,7 @@ const OrgChart = () => {
         <div className="flex flex-col items-center py-8 px-4 min-h-screen">
           {/* CEO Level */}
           {ceo && (
-            <div className="relative flex flex-col items-center mb-[64px]">
-              {" "}
+            <div className="relative flex flex-col items-center  mb-[64px]">
               <PersonCard
                 person={ceo}
                 isHighlighted={highlightName === ceo.name}
@@ -344,7 +424,7 @@ const OrgChart = () => {
               />
               {directors.length > 0 && (
                 <div
-                  className="absolute top-full left-1/2 w-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2"
+                  className="absolute top-full left-1/2 w-px bg-gray-400  dark:bg-gray-600 transform -translate-x-1/2"
                   style={{ height: `${VERTICAL_LINE_SEGMENT_XL}px` }}
                 />
               )}
@@ -354,13 +434,9 @@ const OrgChart = () => {
           {/* Directors Level */}
           {directors.length > 0 && (
             <div className="relative mb-[64px]">
-              {" "}
-              {/* Total vertical space below Directors cards */}
-              {/* Horizontal connector line for directors */}
               <div
                 className="absolute left-1/2 h-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2 top-30px"
                 style={{
-                  // Position at half the total vertical space
                   width: `${(directors.length - 1) * (CARD_WIDTH + GAP_40)}px`,
                 }}
               />
@@ -368,8 +444,6 @@ const OrgChart = () => {
                 className="flex justify-center gap-40"
                 style={{ paddingTop: `${VERTICAL_LINE_SEGMENT_XL}px` }}
               >
-                {" "}
-                {/* pt pushes cards down from horizontal line */}
                 {directors.map((director) => {
                   const managerChildren =
                     managersByDirector[director.id]?.length || 0;
@@ -378,7 +452,6 @@ const OrgChart = () => {
                       key={director.id}
                       className="relative flex flex-col items-center"
                     >
-                      {/* Vertical line from horizontal line to director card */}
                       <div
                         className="absolute bottom-full left-1/2 w-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2"
                         style={{ height: `${VERTICAL_LINE_SEGMENT_XL}px` }}
@@ -404,16 +477,11 @@ const OrgChart = () => {
           {/* Managers Level */}
           {managers.length > 0 && (
             <div className="relative mb-[48px]">
-              {" "}
-              {/* Total vertical space below Managers cards */}
-              {/* Horizontal connector line for managers */}
               <div className="absolute left-1/2 h-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2 top-30px w-248 " />
               <div
                 className="flex justify-center gap-92"
                 style={{ paddingTop: `${VERTICAL_LINE_SEGMENT_XL}px` }}
               >
-                {" "}
-                {/* pt pushes cards down from horizontal line */}
                 {managers.map((manager) => {
                   const employeeChildren =
                     employeesByManager[manager.id]?.length || 0;
@@ -422,7 +490,6 @@ const OrgChart = () => {
                       key={manager.id}
                       className="relative flex flex-col items-center"
                     >
-                      {/* Vertical line from horizontal line to manager card */}
                       <div
                         className="absolute bottom-full left-1/2 w-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2"
                         style={{ height: `${VERTICAL_LINE_SEGMENT_XL}px` }}
@@ -456,11 +523,9 @@ const OrgChart = () => {
                     key={manager.id}
                     className="flex flex-col items-center relative"
                   >
-                    {/* Horizontal line for employees under this manager */}
                     <div
                       className="absolute left-1/2 h-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2 top-32px"
                       style={{
-                        // Position at half the total vertical space
                         width: `${
                           (managerEmployees.length - 1) * (CARD_WIDTH + GAP_4)
                         }px`,
@@ -470,14 +535,11 @@ const OrgChart = () => {
                       className="flex gap-4"
                       style={{ paddingTop: `${VERTICAL_LINE_SEGMENT_LG}px` }}
                     >
-                      {" "}
-                      {/* pt pushes cards down from horizontal line */}
                       {managerEmployees.map((employee) => (
                         <div
                           key={employee.id}
                           className="relative flex flex-col items-center"
                         >
-                          {/* Vertical line from horizontal line to employee card */}
                           <div
                             className="absolute bottom-full left-1/2 w-px bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2"
                             style={{ height: `${VERTICAL_LINE_SEGMENT_LG}px` }}

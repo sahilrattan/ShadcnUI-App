@@ -3,7 +3,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export type ChangePasswordCommand = {
-    oldPassword?: string | null;
-    newPassword?: string | null;
+  CurrentPassword?: string | null;
+  NewPassword?: string | null;
 };
-

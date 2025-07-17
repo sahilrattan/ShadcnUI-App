@@ -10,4 +10,5 @@ export type UserListVM = {
   lastName?: string | null;
   isActive?: boolean;
   createdDate?: string;
+  id?: string | null;
 };

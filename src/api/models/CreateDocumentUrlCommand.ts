@@ -8,4 +8,5 @@ export type CreateDocumentUrlCommand = {
   url?: string | null;
   category?: string | null;
   categoryId?: string | null;
+  extension?: string | null;
 };

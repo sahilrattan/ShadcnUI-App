@@ -147,7 +147,7 @@ export const ProfilePage = () => {
       </Dialog>
 
       {/* main page content */}
-      <div className="max-w-4xl mx-auto px-6 py-6">
+      <div className="max-w-5xl mx-auto px-5 py-6">
         <Tabs defaultValue="profile" className="w-full">
           {/* tabs header */}
           <TabsList className="flex w-full gap-8 border-b">

@@ -59,6 +59,8 @@ const data = {
         { title: "ui.Sign Up", url: "/signup" },
         { title: "ui.Data", url: "/data" },
         { title: "ui.Inbox", url: "/inbox" },
+        { title: "User", url: "/user" },
+
         { title: "ui.Calendar", url: "/calendar" },
       ],
     },

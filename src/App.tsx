@@ -38,6 +38,7 @@ import { AvatarProvider } from "@/stores/AvatarStore";
 // import ResetPasswordForm from "./modules/auth/resetPassword";
 import ResetPasswordPage from "./modules/auth/resetPassword";
 import FallbackRoot from "./ResetFallback";
+import UserManagementPage from "./components/user/UsersList";
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
@@ -115,6 +116,7 @@ export default function App() {
                     {/* <Route path="/department-list" element={<DepartmentList />} /> */}
                     <Route path="/cities" element={<CitiesPage />} />
                     <Route path="/sop-list" element={<SopPage />} />
+                    <Route path="/user" element={<UserManagementPage />} />
                     <Route
                       path="/reset-password"
                       element={<ResetPasswordPage />}

@@ -3,40 +3,45 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trans } from "@lingui/react";
+import { toast } from "sonner";
 import AsyncForm from "../../form/AsyncForm";
 import PasswordInput from "@/modules/form/formInputs/PasswordField";
 import { Button } from "@/components/ui/button";
 import { i18n } from "@lingui/core";
 import ChangePasswordSchema from "./validationSchema";
+import { UserService } from "@/api/services/UserService";
+import type { ChangePasswordCommand } from "@/api/models/ChangePasswordCommand";
 
 const ChangePasswordForm = () => {
   const navigate = useNavigate();
 
   const handleSubmit = useCallback(
-    async (values) => {
-      console.log("Change password values:", values);
+    async (values: {
+      currentPassword: string;
+      newPassword: string;
+      confirmNewPassword: string;
+    }) => {
+      if (values.newPassword !== values.confirmNewPassword) {
+        toast.error("New passwords do not match.");
+        return;
+      }
+
+      const payload: ChangePasswordCommand = {
+        CurrentPassword: values.currentPassword,
+        NewPassword: values.newPassword,
+      } as any;
 
       try {
-        const response = await fetch(
-          "http://localhost:4000/api/change-password",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(values),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Password change failed");
-        }
-
-        alert("Password changed successfully");
+        await UserService.changePassword("v1", payload);
+        toast.success("Password changed successfully.");
         navigate("/signin");
-      } catch (error) {
+      } catch (error: any) {
+        const message =
+          error?.body?.title ||
+          error?.message ||
+          "Failed to change password. Please try again.";
+        toast.error(message);
         console.error("Change password error:", error);
-        alert("Failed to change password: " + error.message);
       }
     },
     [navigate]

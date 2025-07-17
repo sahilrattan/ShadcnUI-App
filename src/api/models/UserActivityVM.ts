@@ -3,10 +3,9 @@
 /* tslint:disable */
 /* eslint-disable */
 export type UserActivityVM = {
-    activityID?: string | null;
-    userID?: string | null;
-    activityType?: string | null;
-    description?: string | null;
-    timestamp?: string;
+  activityID?: string | null;
+  userID?: string | null;
+  activityType?: string | null;
+  description?: string | null;
+  timestamp?: string;
 };
-
