@@ -103,7 +103,7 @@ export const UserManagementPage = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = ["firstName", "lastName", "email", "phoneNumber"];
+    const requiredFields = ["First Name", "Last Name", "Email", "Phone Number"];
     for (const field of requiredFields) {
       if (!formData[field as keyof typeof formData]) {
         toast.error(`${field} is required`);
