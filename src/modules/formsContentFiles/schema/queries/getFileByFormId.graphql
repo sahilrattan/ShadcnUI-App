@@ -1,0 +1,7 @@
+#import "@web/modules/formsContentFiles/schema/fragments/FormDocument.graphql"
+
+query GetFileByFormId($formId: String!) {
+	getFileByFormId(formId: $formId) {
+		...documentFragment
+	}
+}

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { FieldConfig } from "@/types/crud";
+import type { FieldConfig } from "@/types1/crud";
 
 export function CrudForm<T>({
   fields,

@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Edit, Sparkles } from "lucide-react";
-import type { FieldConfig } from "@/types/crud";
+import type { FieldConfig } from "@/types1/crud";
 
 type Props<T> = {
   fields: FieldConfig[];

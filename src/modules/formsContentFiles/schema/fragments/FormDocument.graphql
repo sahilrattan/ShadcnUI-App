@@ -1,0 +1,9 @@
+fragment documentFragment on Document {
+	id
+	formId
+	formAlternateId
+	url
+	isPdf
+	type
+	isDeleted
+}

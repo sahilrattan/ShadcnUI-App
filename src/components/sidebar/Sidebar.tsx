@@ -72,6 +72,7 @@ const data = {
         { title: "ui.Genesis", url: "/kanban" },
         { title: "ui.Chart", url: "/chart" },
         { title: "ui.Quantum", url: "#" },
+        { title: "Event", url: "/event" },
       ],
     },
     {

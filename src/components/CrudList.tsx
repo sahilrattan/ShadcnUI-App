@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CrudDialog } from "./CrudDialog";
 import { Trash2, Database, Sparkles } from "lucide-react";
-import type { CrudConfig } from "@/types/crud";
+import type { CrudConfig } from "@/types1/crud";
 
 /* Guess the primary key: id → *ID → first string field */
 /* Guess the primary key: id → *ID (case‑insensitive) */

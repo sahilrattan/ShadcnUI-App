@@ -1,0 +1,7 @@
+#import "@web/modules/formData/schema/fragments/FormDocument.graphql"
+
+mutation UpdateFormDocument($input: [DocumentInput!]!) {
+	updateFormDocument(input: $input) {
+		...documentFragment
+	}
+}

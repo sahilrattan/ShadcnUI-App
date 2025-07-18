@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { FaUsersLine } from "react-icons/fa6";
-
+import { EyeOff, Eye } from "lucide-react";
 interface User {
   id: string;
   email: string;
@@ -36,6 +36,7 @@ interface User {
 
 const API_VERSION = "1";
 
+// ... (imports remain unchanged)
 export const UserManagementPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [open, setOpen] = useState(false);
@@ -44,6 +45,7 @@ export const UserManagementPage = () => {
   const [formData, setFormData] = useState<
     Partial<CreateUserCommand> & {
       confirmPassword?: string;
+      password?: string;
       phoneNumber?: string;
       id?: string;
       isActive?: boolean;
@@ -52,6 +54,8 @@ export const UserManagementPage = () => {
   >({});
   const [editId, setEditId] = useState<string | null>(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -76,6 +80,8 @@ export const UserManagementPage = () => {
         id: user.id,
         isActive: user.isActive,
         createdDate: user.createdDate,
+        password: "", // Let user set new password if they want
+        confirmPassword: "",
       });
       setEditId(user.id);
       setIsViewOnly(viewOnly);
@@ -103,7 +109,7 @@ export const UserManagementPage = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = ["First Name", "Last Name", "Email", "Phone Number"];
+    const requiredFields = ["firstName", "lastName", "email", "phoneNumber"];
     for (const field of requiredFields) {
       if (!formData[field as keyof typeof formData]) {
         toast.error(`${field} is required`);
@@ -111,15 +117,16 @@ export const UserManagementPage = () => {
       }
     }
 
-    if (!editId) {
-      if (!formData.password || !formData.confirmPassword) {
-        toast.error("Password and confirm password are required");
-        return false;
-      }
+    if (!isViewOnly && (formData.password || formData.confirmPassword)) {
       if (formData.password !== formData.confirmPassword) {
         toast.error("Passwords do not match");
         return false;
       }
+    }
+
+    if (!editId && (!formData.password || !formData.confirmPassword)) {
+      toast.error("Password and confirm password are required");
+      return false;
     }
 
     return true;
@@ -137,6 +144,7 @@ export const UserManagementPage = () => {
           FirstName: formData.firstName!,
           LastName: formData.lastName!,
           phoneNumber: formData.phoneNumber,
+          ...(formData.password ? { password: formData.password } : {}), // Only include if password entered
         };
         await UserService.putApiVUser(API_VERSION, updatePayload);
         toast.success("User updated");
@@ -258,7 +266,9 @@ export const UserManagementPage = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div>
-              <Label htmlFor="firstName">First Name</Label>
+              <Label htmlFor="firstName" className="mb-1 block">
+                First Name
+              </Label>
               <Input
                 id="firstName"
                 name="firstName"
@@ -268,7 +278,9 @@ export const UserManagementPage = () => {
               />
             </div>
             <div>
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName" className="mb-1 block">
+                Last Name
+              </Label>
               <Input
                 id="lastName"
                 name="lastName"
@@ -278,7 +290,9 @@ export const UserManagementPage = () => {
               />
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="mb-1 block">
+                Email
+              </Label>
               <Input
                 id="email"
                 name="email"
@@ -289,7 +303,9 @@ export const UserManagementPage = () => {
               />
             </div>
             <div>
-              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Label htmlFor="phoneNumber" className="mb-1 block">
+                Phone Number
+              </Label>
               <Input
                 id="phoneNumber"
                 name="phoneNumber"
@@ -299,46 +315,74 @@ export const UserManagementPage = () => {
                 readOnly={isViewOnly}
               />
             </div>
-            {!editId && !isViewOnly && (
+
+            {!isViewOnly && (
               <>
-                <div>
-                  <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Label htmlFor="password" className="mb-1 block">
+                    Password
+                  </Label>
                   <Input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={formData.password || ""}
                     onChange={handleChange}
+                    className="pr-10"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-2 top-9  transform -translate-y-1/2 text-gray-500"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
-                <div>
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Label htmlFor="confirmPassword" className="mb-1 block">
+                    Confirm Password
+                  </Label>
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword || ""}
                     onChange={handleChange}
+                    className="pr-10"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute right-2 top-9 mb-1 block transform -translate-y-1/2 text-gray-500"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
                 </div>
               </>
             )}
+
             {isViewOnly && (
               <div className="grid gap-2 pt-2 border-t mt-2">
                 <div>
-                  <Label>ID</Label>
+                  <Label className="mb-1 block">ID</Label>
                   <div className="text-sm text-muted-foreground">
                     {formData.id || "N/A"}
                   </div>
                 </div>
                 <div>
-                  <Label>Active</Label>
+                  <Label className="mb-1 block">Active</Label>
                   <div className="text-sm text-muted-foreground">
                     {formData.isActive ? "Yes" : "No"}
                   </div>
                 </div>
                 <div>
-                  <Label>Created Date</Label>
+                  <Label className="mb-1 block">Created Date</Label>
                   <div className="text-sm text-muted-foreground">
                     {formData.createdDate
                       ? new Date(formData.createdDate).toLocaleString()
@@ -360,6 +404,7 @@ export const UserManagementPage = () => {
             </div>
           )}
         </DialogContent>
+
         <UserActivityDialog
           open={!!activityUserId}
           userId={activityUserId!}

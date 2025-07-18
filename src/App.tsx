@@ -30,7 +30,7 @@ import ChangePasswordForm from "./modules/auth/changePassword";
 import ForgotPasswordForm from "./modules/auth/forgotPassword";
 // import DepartmentList from "./components/DepartmentList";
 import CitiesPage from "./components/Cities";
-
+import Page from "./app/form/event/page";
 import { OpenAPI } from "@/api/core/OpenAPI";
 import { CustomOpenAPIConfig } from "@/api/custom/OpenAPIConfig";
 import SopPage from "./components/Sop";
@@ -109,6 +109,7 @@ export default function App() {
                     <Route path="/billing" element={<InvoiceForm />} />
                     <Route path="/queries" element={<TicketingSystem />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/event" element={<Page />} />
                     <Route
                       path="/forgot-password"
                       element={<ForgotPasswordForm />}

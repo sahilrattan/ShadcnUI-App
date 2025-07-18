@@ -21,7 +21,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User } from "./UserTable";
-import { UI } from "react-day-picker";
 
 export const UserFormDialog = ({
   mode = "add",
