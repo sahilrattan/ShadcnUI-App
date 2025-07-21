@@ -3,6 +3,26 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print\:border-none,
+  .print\:shadow-none,
+  .print\:border-none *,
+  .print\:shadow-none * {
+    visibility: visible;
+  }
+  .print\:border-none {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -78,10 +98,9 @@
   --desktop: #2563eb;
   --mobile: #60a5fa;
 
-   --sidebar-tooltip: hsl(0, 0%, 10%);
+  --sidebar-tooltip: hsl(0, 0%, 10%);
   --sidebar-tooltip-foreground: white;
 }
-
 
 .dark {
   --background: hsl(240 10% 10%);
@@ -115,11 +134,10 @@
   --desktop: #3b82f6;
   --mobile: #93c5fd;
 
-
   .dark {
-  --sidebar-tooltip: hsl(0, 0%, 90%);
-  --sidebar-tooltip-foreground: black;
-}
+    --sidebar-tooltip: hsl(0, 0%, 90%);
+    --sidebar-tooltip-foreground: black;
+  }
 }
 
 /* GREEN Theme */
@@ -147,14 +165,12 @@
   --mobile: #60a5fa;
 }
 [data-color-theme="Violet"] {
-  --primary: hsl(262 83% 58%); 
+  --primary: hsl(262 83% 58%);
   --primary-foreground: hsl(0 0% 100%);
   --ring: hsl(262 83% 58%);
-  --desktop: #7c3aed; 
-  --mobile: #c4b5fd;  
+  --desktop: #7c3aed;
+  --mobile: #c4b5fd;
 }
-
-
 
 @layer base {
   * {

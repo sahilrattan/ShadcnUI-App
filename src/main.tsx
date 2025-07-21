@@ -3,13 +3,13 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { BrowserRouter } from "react-router-dom";
-import ReduxProvider from "./components/ReduxProvider.tsx";
+import { DndContext } from "@dnd-kit/core";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ReduxProvider>
+    <DndContext>
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </ReduxProvider>
+    </DndContext>
   </StrictMode>
 );

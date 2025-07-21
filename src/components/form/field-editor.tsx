@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   type FormField,
   type FormFieldOption,
-  FormFieldType, // Import FormFieldType as a value
+  FormFieldType,
   type SelectField,
   type RadioGroupField,
 } from "./types";
@@ -108,6 +107,7 @@ export function FieldEditor({
             name="label"
             value={field.label}
             onChange={handleInputChange}
+            placeholder="Enter field label"
           />
         </div>
         <div>
@@ -118,6 +118,7 @@ export function FieldEditor({
               name="placeholder"
               value={field.placeholder || ""}
               onChange={handleInputChange}
+              placeholder="Enter placeholder text"
             />
           ) : (
             <Input
@@ -125,6 +126,7 @@ export function FieldEditor({
               name="placeholder"
               value={field.placeholder || ""}
               onChange={handleInputChange}
+              placeholder="Enter placeholder text"
             />
           )}
         </div>

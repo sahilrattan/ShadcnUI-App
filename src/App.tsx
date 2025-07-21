@@ -39,6 +39,14 @@ import { AvatarProvider } from "@/stores/AvatarStore";
 import ResetPasswordPage from "./modules/auth/resetPassword";
 import FallbackRoot from "./ResetFallback";
 import UserManagementPage from "./components/user/UsersList";
+import FormTemplatesPage from "./components/form/FormTemplates";
+import FormBuilder from "./components/form/form-builder";
+import { FormPreview } from "./components/form/FormPreviewPage";
+import { DndContext } from "react-dnd";
+import PreviewPage from "./components/form/PreviewPage";
+import MinimalPreviewPage from "./components/form/MinimalPreviewPage";
+import FormPreviewPage from "./components/form/FormPreviewPage1";
+import PreviewPageForm from "./routes/preview";
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
   hi: () => import("@/locales/hi/messages.js"),
@@ -85,6 +93,8 @@ export default function App() {
     <AvatarProvider>
       <I18nProvider i18n={i18n}>
         <ThemeProvider>
+          <PreviewPageForm />
+
           <SidebarProvider>
             <div className="flex">
               <AppSidebar />
@@ -109,7 +119,11 @@ export default function App() {
                     <Route path="/billing" element={<InvoiceForm />} />
                     <Route path="/queries" element={<TicketingSystem />} />
                     <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/event" element={<Page />} />
+                    <Route path="/event" element={<FormTemplatesPage />} />
+                    <Route path="/formbuilder/:id" element={<FormBuilder />} />
+                    <Route path="/formbuilder/new" element={<FormBuilder />} />
+                    {/* <Route path="/preview/:id" element={<PreviewPage />} /> */}
+
                     <Route
                       path="/forgot-password"
                       element={<ForgotPasswordForm />}
