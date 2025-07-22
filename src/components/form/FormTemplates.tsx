@@ -1,15 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusIcon, EyeIcon, Trash2Icon, GlobeIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import NewFormDialog from "@/components/form/NewFormDialog";
 import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
+  PlusIcon,
+  EyeIcon,
+  Trash2Icon,
+  GlobeIcon,
+  ImagePlus,
+  FileText,
+  Images,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,36 +20,92 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import NewFormDialog from "@/components/form/NewFormDialog";
+import { MdPermMedia } from "react-icons/md";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface FormTemplate {
   id: string;
   name: string;
   createdAt: string;
   fields?: any[];
+  media?: MediaItem;
+}
+
+interface MediaItem {
+  type: "poster" | "slideshow" | "pdf";
+  files: File[];
+  urls?: string[]; // For storing object URLs
 }
 
 const LOCAL_STORAGE_KEY = "forms";
 
 export default function FormTemplatesPage() {
   const [templates, setTemplates] = useState<FormTemplate[]>([]);
-  const [showDialog, setShowDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDialog, setShowDialog] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formToDelete, setFormToDelete] = useState<string | null>(null);
-  const [showGfgDialog, setShowGfgDialog] = useState(false);
-  const [previewFormId, setPreviewFormId] = useState<string | null>(null);
+  const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
+  const [embedFormId, setEmbedFormId] = useState<string | null>(null);
+  const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [currentMedia, setCurrentMedia] = useState<MediaItem | null>(null);
+  const [currentFormId, setCurrentFormId] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const loadTemplates = () => {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       try {
-        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-        const parsedTemplates = stored ? JSON.parse(stored) : [];
-        setTemplates(Array.isArray(parsedTemplates) ? parsedTemplates : []);
-      } catch (error) {
-        console.error("Error loading templates:", error);
+        const parsed = stored ? JSON.parse(stored) : [];
+        // Convert stored media data back to File objects if needed
+        const templatesWithMedia = Array.isArray(parsed)
+          ? parsed.map((template) => {
+              if (template.media) {
+                return {
+                  ...template,
+                  media: {
+                    ...template.media,
+                    // Recreate File objects if needed (this is simplified)
+                    files: template.media.files.map(
+                      (file: any) =>
+                        new File([], file.name, { type: file.type })
+                    ),
+                  },
+                };
+              }
+              return template;
+            })
+          : [];
+        setTemplates(templatesWithMedia);
+      } catch {
         setTemplates([]);
       } finally {
         setIsLoading(false);
@@ -67,81 +123,107 @@ export default function FormTemplatesPage() {
       fields: isBlank ? [] : undefined,
     };
 
-    const updatedForms = [...templates, newForm];
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedForms));
-    setTemplates(updatedForms);
+    const updated = [...templates, newForm];
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+    setTemplates(updated);
     setShowDialog(false);
     navigate(`/formbuilder/${newForm.id}`);
   };
 
-  const handleBlankFormClick = () => {
-    handleCreateForm("Untitled Form", true);
-  };
-
-  const handleNewFormClick = () => {
-    setShowDialog(true);
-  };
-
-  const handlePreviewClick = (formId: string) => {
-    // Open embed.html with formId as query param
-    const embedUrl = `/embed.html?formId=${formId}`;
-    window.open(embedUrl, "_blank", "width=900,height=700");
-  };
-
-  const handleDeleteClick = (e: React.MouseEvent, formId: string) => {
-    e.stopPropagation();
-    setFormToDelete(formId);
-    setDeleteDialogOpen(true);
-  };
-
   const confirmDelete = () => {
     if (!formToDelete) return;
-
-    const updatedForms = templates.filter((form) => form.id !== formToDelete);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedForms));
-    setTemplates(updatedForms);
+    const updated = templates.filter((f) => f.id !== formToDelete);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+    setTemplates(updated);
     setDeleteDialogOpen(false);
     setFormToDelete(null);
   };
 
-  const cancelDelete = () => {
-    setDeleteDialogOpen(false);
-    setFormToDelete(null);
+  const generateEmbedCode = (formId: string) => {
+    return `
+<!-- Embed this in your HTML -->
+<div id="form-embed-container">
+  <button class="form-btn" id="openFormBtn" data-form-id="${formId}">
+    Open Form
+  </button>
+</div>
+<script src="http://localhost:5173/embed.js"></script>
+<link rel="stylesheet" href="http://localhost:5173/embed.css" />
+`;
+  };
+
+  const handleSaveMedia = (formId: string, media: MediaItem) => {
+    // Create object URLs for preview
+    const mediaWithUrls = {
+      ...media,
+      urls: media.files.map((file) => URL.createObjectURL(file)),
+    };
+
+    const updated = templates.map((template) => {
+      if (template.id === formId) {
+        return { ...template, media: mediaWithUrls };
+      }
+      return template;
+    });
+
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+    setTemplates(updated);
+    setCurrentMedia(null);
+    setMediaDialogOpen(false);
+  };
+
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "poster" | "slideshow" | "pdf"
+  ) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+
+      if (type === "pdf") {
+        const pdfFiles = newFiles.filter(
+          (file) => file.type === "application/pdf"
+        );
+        setCurrentMedia({
+          type: "pdf",
+          files: pdfFiles.slice(0, 1),
+        });
+      } else {
+        const imageFiles = newFiles.filter((file) =>
+          file.type.startsWith("image/")
+        );
+        setCurrentMedia({
+          type,
+          files: type === "poster" ? imageFiles.slice(0, 1) : imageFiles,
+        });
+      }
+    }
   };
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="flex justify-center items-center h-64">
-          <p>Loading forms...</p>
-        </div>
-      </div>
-    );
+    return <div className="p-8 text-center">Loading forms...</div>;
   }
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold">Form Templates</h1>
         <div className="space-x-2">
-          <Button onClick={handleNewFormClick}>
+          <Button onClick={() => setShowDialog(true)}>
             <PlusIcon className="mr-2 h-4 w-4" />
             New Form
           </Button>
-          <Button variant="outline" onClick={() => setShowGfgDialog(true)}>
+          <Button variant="outline">
             <GlobeIcon className="mr-2 h-4 w-4" />
-            Click here
+            Docs
           </Button>
         </div>
       </div>
 
-      {/* Template Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Blank Form Card */}
+        {/* Blank Form */}
         <Card
           className="cursor-pointer hover:bg-muted/50"
-          onClick={handleBlankFormClick}
+          onClick={() => handleCreateForm("Untitled Form", true)}
         >
           <CardHeader>
             <CardTitle className="text-center">Blank Form</CardTitle>
@@ -151,7 +233,7 @@ export default function FormTemplatesPage() {
           </CardContent>
         </Card>
 
-        {/* User Templates */}
+        {/* Form Templates */}
         {templates.length > 0 ? (
           templates.map((template) => (
             <Card key={template.id}>
@@ -169,6 +251,13 @@ export default function FormTemplatesPage() {
                   <p className="text-sm text-muted-foreground">
                     Fields: {template.fields?.length || 0}
                   </p>
+                  {template.media && (
+                    <p className="text-sm text-muted-foreground">
+                      Media: {template.media.type} (
+                      {template.media.files.length} file
+                      {template.media.files.length !== 1 ? "s" : ""})
+                    </p>
+                  )}
                   <div className="flex gap-2 mt-2">
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -177,15 +266,13 @@ export default function FormTemplatesPage() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handlePreviewClick(template.id);
+                            window.open("/embed.html", "_blank");
                           }}
                         >
                           <EyeIcon className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Preview form</p>
-                      </TooltipContent>
+                      <TooltipContent>Preview Form</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -194,23 +281,75 @@ export default function FormTemplatesPage() {
                           variant="ghost"
                           size="sm"
                           className="text-destructive hover:text-destructive"
-                          onClick={(e) => handleDeleteClick(e, template.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFormToDelete(template.id);
+                            setDeleteDialogOpen(true);
+                          }}
                         >
                           <Trash2Icon className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
+                      <TooltipContent>Delete</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={template.media ? "default" : "outline"}
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentFormId(template.id);
+                            setCurrentMedia(template.media || null);
+                            setMediaDialogOpen(true);
+                          }}
+                        >
+                          <MdPermMedia className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
                       <TooltipContent>
-                        <p>Delete form</p>
+                        {template.media ? "Edit Media" : "Add Media"}
                       </TooltipContent>
                     </Tooltip>
+
+                    {template.media && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/form-preview/${template.id}`);
+                            }}
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Preview</TooltipContent>
+                      </Tooltip>
+                    )}
+
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEmbedFormId(template.id);
+                        setEmbedDialogOpen(true);
+                      }}
+                    >
+                      Embed Code
+                    </Button>
                   </div>
                 </CardContent>
               </div>
             </Card>
           ))
         ) : (
-          <div className="col-span-full text-center py-8 text-muted-foreground">
-            No forms found. Create your first form!
+          <div className="col-span-full text-center text-muted-foreground">
+            No templates found.
           </div>
         )}
       </div>
@@ -222,21 +361,22 @@ export default function FormTemplatesPage() {
         onCreate={(name) => handleCreateForm(name, false)}
       />
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Form</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              form.
+              This will permanently delete the form.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelDelete}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
+              className="bg-destructive"
               onClick={confirmDelete}
-              className="bg-destructive hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>
@@ -244,37 +384,205 @@ export default function FormTemplatesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Preview Dialog */}
-      <Dialog
-        open={!!previewFormId}
-        onOpenChange={(open) => !open && setPreviewFormId(null)}
-      >
-        <DialogContent className="max-w-5xl p-0 overflow-hidden h-[90vh] w-full">
-          <div className="w-full h-full">
-            {previewFormId && (
-              <iframe
-                src={`/form-preview/${previewFormId}`}
-                title="Form Preview"
-                width="100%"
-                height="100%"
-                className="border-none "
-                style={{ overflow: "hidden" }}
-              />
-            )}
-          </div>
+      {/* Embed Code Dialog */}
+      <Dialog open={embedDialogOpen} onOpenChange={setEmbedDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Embed This Form</DialogTitle>
+            <DialogDescription>
+              Copy the embed code and paste it into your website.
+            </DialogDescription>
+          </DialogHeader>
+
+          <textarea
+            className="w-full p-3 rounded border text-sm font-mono bg-muted"
+            rows={8}
+            readOnly
+            value={embedFormId ? generateEmbedCode(embedFormId) : ""}
+          />
+
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  generateEmbedCode(embedFormId || "")
+                );
+              }}
+            >
+              Copy Code
+            </Button>
+            <DialogClose asChild>
+              <Button variant="outline">Close</Button>
+            </DialogClose>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showGfgDialog} onOpenChange={setShowGfgDialog}>
-        <DialogContent className="max-w-5xl p-0 overflow-hidden">
-          <div className="w-full h-[80vh]">
-            <iframe
-              src="https://ui.shadcn.com/"
-              title="Shadcn UI"
-              width="100%"
-              height="100%"
-              className="border-none"
-            />
+      {/* Add Media Dialog */}
+      <Dialog open={mediaDialogOpen} onOpenChange={setMediaDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {currentMedia ? "Edit Media" : "Add Media"}
+            </DialogTitle>
+            <DialogDescription>
+              {currentMedia
+                ? "Update the media files for your form"
+                : "Upload media files for your form"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs defaultValue={currentMedia?.type || "poster"}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="poster">
+                <ImagePlus className="mr-2 h-4 w-4" />
+                Poster
+              </TabsTrigger>
+              <TabsTrigger value="slideshow">
+                <Images className="mr-2 h-4 w-4" />
+                Slideshow
+              </TabsTrigger>
+              <TabsTrigger value="pdf">
+                <FileText className="mr-2 h-4 w-4" />
+                PDF
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="poster">
+              <div className="space-y-4 py-4">
+                <Label>Upload a single image</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, "poster")}
+                  multiple={false}
+                />
+                {currentMedia?.type === "poster" &&
+                  currentMedia.files.length > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      Selected: {currentMedia.files[0].name}
+                    </div>
+                  )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="slideshow">
+              <div className="space-y-4 py-4">
+                <Label>Upload multiple images</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, "slideshow")}
+                  multiple
+                />
+                {currentMedia?.type === "slideshow" &&
+                  currentMedia.files.length > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      Selected {currentMedia.files.length} images
+                    </div>
+                  )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="pdf">
+              <div className="space-y-4 py-4">
+                <Label>Upload a PDF file</Label>
+                <Input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => handleFileChange(e, "pdf")}
+                  multiple={false}
+                />
+                {currentMedia?.type === "pdf" &&
+                  currentMedia.files.length > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      Selected: {currentMedia.files[0].name}
+                    </div>
+                  )}
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMediaDialogOpen(false);
+                setCurrentMedia(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (currentMedia && currentFormId) {
+                  handleSaveMedia(currentFormId, currentMedia);
+                }
+              }}
+              disabled={!currentMedia || currentMedia.files.length === 0}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Media Dialog */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="sm:max-w-[70%] max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Preview Media</DialogTitle>
+          </DialogHeader>
+
+          <div className="overflow-auto max-h-[70vh]">
+            {/* {currentMedia?.type === "pdf" && currentMedia.urls?.[0] && (
+              <div className="flex flex-col items-center justify-center p-4">
+                <FileText className="h-24 w-24 text-muted-foreground" />
+                <p className="mt-2 text-lg font-medium">
+                  {currentMedia.files[0]?.name}
+                </p>
+                <p className="text-sm text-muted-foreground">PDF File</p>
+                <Button
+                  variant="default"
+                  className="mt-4"
+                  onClick={() => window.open(currentMedia.urls?.[0], "_blank")}
+                >
+                  View PDF
+                </Button>
+              </div>
+            )} */}
+
+            {currentMedia?.type === "poster" && currentMedia.urls?.[0] && (
+              <div className="flex justify-center">
+                <img
+                  src={currentMedia.urls[0]}
+                  alt="Poster"
+                  className="max-h-[60vh] object-contain"
+                />
+              </div>
+            )}
+
+            {currentMedia?.type === "slideshow" &&
+              currentMedia.urls &&
+              currentMedia.urls.length > 0 && (
+                <Carousel className="w-full max-w-2xl mx-auto">
+                  <CarouselContent>
+                    {currentMedia.urls.map((url, index) => (
+                      <CarouselItem key={index}>
+                        <div className="flex justify-center p-1">
+                          <img
+                            src={url}
+                            alt={`Slide ${index + 1}`}
+                            className="max-h-[60vh] object-contain"
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
+              )}
           </div>
         </DialogContent>
       </Dialog>

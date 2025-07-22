@@ -1,6 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { FileText, ImageIcon } from "lucide-react";
 
 interface FormField {
   id: string;
@@ -11,11 +19,18 @@ interface FormField {
   options?: Array<{ label: string; value: string }>;
 }
 
-export default function FormPreviewPage() {
+interface MediaItem {
+  type: "poster" | "slideshow" | "pdf";
+  files: File[];
+  urls?: string[];
+}
+
+export default function MediaFormPreviewPage() {
   const { id } = useParams();
   const [formData, setFormData] = useState<{
     name: string;
     fields: FormField[];
+    media?: MediaItem;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,6 +38,7 @@ export default function FormPreviewPage() {
     document.body.style.overflow = "hidden";
     document.body.style.padding = "0";
     document.body.style.margin = "0";
+    document.body.style.height = "100vh";
 
     const loadForm = () => {
       try {
@@ -34,6 +50,7 @@ export default function FormPreviewPage() {
             setFormData({
               name: form.name,
               fields: form.fields || [],
+              media: form.media || undefined,
             });
           }
         }
@@ -50,13 +67,14 @@ export default function FormPreviewPage() {
       document.body.style.overflow = "";
       document.body.style.padding = "";
       document.body.style.margin = "";
+      document.body.style.height = "";
     };
   }, [id]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
-        <p>Loading form preview...</p>
+        <p>Loading preview...</p>
       </div>
     );
   }
@@ -70,19 +88,93 @@ export default function FormPreviewPage() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-2xl mx-auto bg-white p-6">
-        <h1 className="text-2xl font-bold mb-6">{formData.name}</h1>
-        <div className="space-y-4">
-          {formData.fields.map((field) => (
-            <div key={field.id} className="space-y-2">
-              <label className="block text-sm font-medium">
-                {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
-              </label>
-              {renderField(field)}
-            </div>
-          ))}
+    <div className="flex h-screen w-full bg-gray-50">
+      {/* Media Preview Section (Left Side) */}
+      <div className="w-1/2 h-full bg-white border-r border-gray-200 overflow-auto p-8">
+        <h2 className="text-xl font-bold mb-6">Media Preview</h2>
+
+        {formData.media ? (
+          <div className="flex flex-col items-center justify-center h-[calc(100%-3rem)]">
+            {formData.media.type === "pdf" && formData.media.urls?.[0] && (
+              <div className="w-full h-full">
+                <iframe
+                  src={formData.media.urls[0]}
+                  title="PDF Preview"
+                  className="border-none"
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                />
+                <p className="mt-2 text-sm text-muted-foreground text-center">
+                  {formData.media.files[0]?.name}
+                </p>
+              </div>
+            )}
+
+            {formData.media.type === "poster" && formData.media.urls?.[0] && (
+              <div className="flex justify-center max-h-full">
+                <img
+                  src={formData.media.urls[0]}
+                  alt="Poster"
+                  className="max-h-[80vh] object-contain"
+                />
+              </div>
+            )}
+
+            {formData.media.type === "slideshow" &&
+              formData.media.urls &&
+              formData.media.urls.length > 0 && (
+                <div className="w-full max-w-2xl">
+                  <Carousel>
+                    <CarouselContent>
+                      {formData.media.urls.map((url, index) => (
+                        <CarouselItem key={index}>
+                          <div className="flex justify-center p-1">
+                            <img
+                              src={url}
+                              alt={`Slide ${index + 1}`}
+                              className="max-h-[70vh] object-contain"
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
+                </div>
+              )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-[calc(100%-3rem)] text-gray-400">
+            <ImageIcon className="h-24 w-24 mb-4" />
+            <p>No media attached to this form</p>
+          </div>
+        )}
+      </div>
+
+      {/* Form Preview Section (Right Side) */}
+      <div className="w-1/2 h-full overflow-auto p-8">
+        <h2 className="text-xl font-bold mb-6">Form Preview</h2>
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <h1 className="text-2xl font-bold mb-6">{formData.name}</h1>
+          <div className="space-y-4">
+            {formData.fields.length > 0 ? (
+              formData.fields.map((field) => (
+                <div key={field.id} className="space-y-2">
+                  <label className="block text-sm font-medium">
+                    {field.label}
+                    {field.required && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </label>
+                  {renderField(field)}
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">No fields in this form</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
