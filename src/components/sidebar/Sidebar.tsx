@@ -92,7 +92,7 @@ const data = {
       icon: Settings2,
       items: [
         { title: "ui.General", url: "#" },
-        { title: "ui.Team", url: "#" },
+        { title: "Company", url: "/companymanagement" },
         { title: "ui.Billing", url: "/billing" },
         { title: "Queries", url: "/queries" },
       ],

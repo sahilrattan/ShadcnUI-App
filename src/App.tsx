@@ -37,6 +37,7 @@ import FormBuilder from "./components/form/form-builder";
 import FormPreviewPage from "./components/form/FormPreviewPage1";
 import { useLocation } from "react-router-dom";
 import MediaFormPreviewPage from "./components/form/FormPreviewPage1";
+import CompanyManagementPage from "./components/company/layout";
 
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
@@ -152,6 +153,10 @@ export default function App() {
               <Route path="/sop-list" element={<SopPage />} />
               <Route path="/user" element={<UserManagementPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route
+                path="/companymanagement"
+                element={<CompanyManagementPage />}
+              />
 
               {/* Full-screen routes */}
               <Route
