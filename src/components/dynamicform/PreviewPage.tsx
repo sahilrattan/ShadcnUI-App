@@ -1,11 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
-import { FormFieldType } from "@/components/form/types";
+import { useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeftIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { FormFieldType } from "@/components/dynamicform/types";
 
-export default function MinimalPreviewPage() {
+export default function PreviewPage() {
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<{
     name: string;
     fields: FormFieldType[];
@@ -36,35 +40,62 @@ export default function MinimalPreviewPage() {
     loadForm();
   }, [id]);
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (isLoading) {
     return (
-      <div className="flex justify-center  items-center h-full">
-        <p>Loading form preview...</p>
+      <div className="container mx-auto py-8">
+        <div className="flex justify-center items-center h-64">
+          <p>Loading form preview...</p>
+        </div>
       </div>
     );
   }
 
   if (!formData) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <p>Form not found</p>
+      <div className="container mx-auto py-8">
+        <div className="flex justify-center items-center h-64">
+          <p>Form not found</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6 text-center">{formData.name}</h1>
-      <div className="space-y-4 max-w-2xl mx-auto">
-        {formData.fields.map((field, index) => (
-          <div key={index} className="space-y-2">
-            <label className="block text-sm font-medium">
-              {field.label}
-              {field.required && <span className="text-red-500">*</span>}
-            </label>
-            {renderField(field)}
-          </div>
-        ))}
+    <div className="container mx-auto py-8 print:p-0">
+      <div className="mb-4">
+        <Button variant="outline" onClick={handleBack}>
+          <ArrowLeftIcon className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+      </div>
+
+      <Card className="print:border-none print:shadow-none">
+        <CardHeader>
+          <CardTitle className="text-center">{formData.name}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {formData.fields.map((field, index) => (
+            <div key={index} className="space-y-2">
+              <label className="block text-sm font-medium">
+                {field.label}
+                {field.required && <span className="text-red-500">*</span>}
+              </label>
+              {renderField(field)}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="mt-4 flex justify-center print:hidden">
+        <Button onClick={handlePrint}>Print/Generate PDF</Button>
       </div>
     </div>
   );

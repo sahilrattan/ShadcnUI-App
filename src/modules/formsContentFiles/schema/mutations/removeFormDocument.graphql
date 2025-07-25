@@ -1,6 +1,0 @@
-#import "@web/modules/formData/schema/fragments/FormDocument.graphql"
-mutation RemoveFormDocument($documentId: Float!) {
-	removeFormDocument(documentId: $documentId) {
-		...documentFragment
-	}
-}

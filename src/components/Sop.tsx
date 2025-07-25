@@ -248,7 +248,7 @@ export default function SopPageEnhanced() {
       setIsUploading(false);
       return;
     }
-    setError(""); // Clear any previous file-related errors
+    setError("");
     setIsUploading(true);
     setUploadProgress(0);
     const reader = new FileReader();

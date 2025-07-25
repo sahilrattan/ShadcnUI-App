@@ -1,6 +1,7 @@
 "use client";
-
 import type { ControllerRenderProps } from "react-hook-form";
+import type React from "react";
+
 import type { z } from "zod";
 import {
   Select,
@@ -31,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { CalendarIcon, ClockIcon } from "lucide-react";
 import { format } from "date-fns";
 import type { FormField, FormFieldOption } from "./types";
+import { useState, useRef } from "react";
 
 interface DynamicFieldProps {
   fieldConfig: FormField;
@@ -73,11 +75,10 @@ export function DynamicSelect({ fieldConfig, field }: DynamicFieldProps) {
   const selectFieldConfig = fieldConfig as FormField & {
     options: FormFieldOption[];
   };
-
   return (
     <FormItem>
       <FormLabel>{selectFieldConfig.label}</FormLabel>
-      <Select onValueChange={field.onChange} defaultValue={field.value}>
+      <Select onValueChange={field.onChange} value={field.value || ""}>
         <FormControl>
           <SelectTrigger>
             <SelectValue
@@ -102,7 +103,10 @@ export function DynamicCheckbox({ fieldConfig, field }: DynamicFieldProps) {
   return (
     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
       <FormControl>
-        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+        <Checkbox
+          checked={field.value || false}
+          onCheckedChange={field.onChange}
+        />
       </FormControl>
       <div className="space-y-1 leading-none">
         <FormLabel>{fieldConfig.label}</FormLabel>
@@ -119,14 +123,13 @@ export function DynamicRadioGroup({ fieldConfig, field }: DynamicFieldProps) {
   const radioGroupFieldConfig = fieldConfig as FormField & {
     options: FormFieldOption[];
   };
-
   return (
     <FormItem className="space-y-3">
       <FormLabel>{radioGroupFieldConfig.label}</FormLabel>
       <FormControl>
         <RadioGroup
           onValueChange={field.onChange}
-          defaultValue={field.value}
+          value={field.value || ""}
           className="flex flex-col space-y-1"
         >
           {radioGroupFieldConfig.options?.map((option) => (
@@ -169,7 +172,6 @@ export function DynamicNumber({ fieldConfig, field }: DynamicFieldProps) {
     max?: number;
     step?: number;
   };
-
   return (
     <FormItem>
       <FormLabel>{numberFieldConfig.label}</FormLabel>
@@ -262,17 +264,64 @@ export function DynamicFile({ fieldConfig, field }: DynamicFieldProps) {
     accept?: string;
     multiple?: boolean;
   };
+  const [fileInfo, setFileInfo] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const fileNames = Array.from(files)
+        .map((file) => file.name)
+        .join(", ");
+      setFileInfo(fileNames);
+
+      // Convert files to base64 for storage
+      const filePromises = Array.from(files).map((file) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            resolve({
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              data: e.target?.result,
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(filePromises).then((fileData) => {
+        field.onChange(fileFieldConfig.multiple ? fileData : fileData[0]);
+      });
+    } else {
+      setFileInfo("");
+      field.onChange(null);
+    }
+  };
 
   return (
     <FormItem>
       <FormLabel>{fileFieldConfig.label}</FormLabel>
       <FormControl>
-        <Input
-          type="file"
-          onChange={(e) => field.onChange(e.target.files)}
-          accept={fileFieldConfig.accept}
-          multiple={fileFieldConfig.multiple}
-        />
+        <div className="space-y-2">
+          <Input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileChange}
+            accept={fileFieldConfig.accept}
+            multiple={fileFieldConfig.multiple}
+            className="cursor-pointer"
+          />
+          {fileInfo && (
+            <p className="text-sm text-muted-foreground">
+              Selected: {fileInfo}
+            </p>
+          )}
+          {field.value && (
+            <p className="text-sm text-green-600">✓ File(s) saved with form</p>
+          )}
+        </div>
       </FormControl>
       <FormMessage />
     </FormItem>
@@ -289,7 +338,10 @@ export function DynamicToggle({ fieldConfig, field }: DynamicFieldProps) {
         )}
       </div>
       <FormControl>
-        <Switch checked={field.value} onCheckedChange={field.onChange} />
+        <Switch
+          checked={field.value || false}
+          onCheckedChange={field.onChange}
+        />
       </FormControl>
     </FormItem>
   );

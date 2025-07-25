@@ -32,11 +32,11 @@ import { AvatarProvider } from "@/stores/AvatarStore";
 import ResetPasswordPage from "./modules/auth/resetPassword";
 import FallbackRoot from "./ResetFallback";
 import UserManagementPage from "./components/user/UsersList";
-import FormTemplatesPage from "./components/form/FormTemplates";
-import FormBuilder from "./components/form/form-builder";
-import FormPreviewPage from "./components/form/FormPreviewPage1";
+import FormTemplatesPage from "./components/dynamicform/FormTemplates";
+import FormBuilder from "./components/dynamicform/form-builder";
+import FormPreviewPage from "./components/dynamicform/FormPreviewPage1";
 import { useLocation } from "react-router-dom";
-import MediaFormPreviewPage from "./components/form/FormPreviewPage1";
+import MediaFormPreviewPage from "./components/dynamicform/FormPreviewPage1";
 import CompanyManagementPage from "./components/company/layout";
 
 const localeMessages = {
@@ -45,7 +45,6 @@ const localeMessages = {
   de: () => import("@/locales/de/messages.js"),
 };
 
-// Layout component for pages with sidebar
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider>
@@ -63,7 +62,6 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Layout component for full-screen pages (like form preview)
 const FullScreenLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen">
@@ -73,11 +71,9 @@ const FullScreenLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Component to determine which layout to use
 const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
-  // Define routes that should use full-screen layout
   const fullScreenRoutes = ["/form-preview"];
 
   const isFullScreen = fullScreenRoutes.some((route) =>

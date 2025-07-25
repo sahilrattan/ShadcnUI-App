@@ -1,7 +1,7 @@
 // utils/generatePdf.ts
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-import type { FormField } from "../components/form/types";
+import type { FormField } from "../components/dynamicform/types";
 
 export const generateFormPdf = (formName: string, formFields: FormField[]) => {
   const doc = new jsPDF();

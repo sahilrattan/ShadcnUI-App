@@ -100,11 +100,64 @@ export function CompanyFormDialog({
     }
   }, [company, reset]);
 
-  const onSubmit = (data: CompanyFormData) => {
-    onSave(data);
+  const onSubmit = async (data: CompanyFormData) => {
+    onSave(data); // Save company logic (existing)
     onOpenChange(false);
+
+    // Call WhatsApp API after form submit
+    if (data.phone && data.name) {
+      const formattedPhone = data.phone.replace(/\D/g, ""); // This should result in "919805955466" for your example
+      await sendWhatsAppMessage(formattedPhone, data.name);
+    }
   };
 
+  const sendWhatsAppMessage = async (
+    phoneNumber: string,
+    companyName: string
+  ) => {
+    const accessToken =
+      "EAAecAjDNyVQBPOmLqJjYjc4RXTQ1JEKaDsMbwsftRQkG3553ta9oTYHKZBObbZCUA13ZAXS36LdNXGKP2ZCEpR9QWZANlHbHyDF6j3ryjjSFdB7avromEgtjqZAmzqdQ0ZB9LOvPB7xZB4MAuE2yKN8zZA5ienTwHuCtIcSZCATQVgBX5TuZBLXxcx2nAGqZCeNA69PfZAx9dN6rqeZCGtDKUjZCqh1iOS7EIYpajG3ZAhX5YFKYPgZDZD";
+    const phoneNumberId = "705049146032161";
+
+    const payload = {
+      messaging_product: "whatsapp",
+      to: phoneNumber,
+      type: "template",
+      template: {
+        name: "trigbit",
+        language: {
+          code: "en",
+        },
+        components: [
+          {
+            type: "body",
+            parameters: [
+              { type: "text", text: "Sir/Madam" },
+              { type: "text", text: companyName },
+            ],
+          },
+        ],
+      },
+    };
+
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      const result = await response.json();
+      console.log("WhatsApp API Response:", result);
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+    }
+  };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl">

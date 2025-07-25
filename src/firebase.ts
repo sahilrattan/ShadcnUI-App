@@ -1,7 +1,7 @@
 // firebase.ts
 import { initializeApp } from "firebase/app";
 import { getMessaging } from "firebase/messaging";
-import { getFirestore } from "firebase/firestore"; // ✅ Add this
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDM6MN__48RJX7qEogIHLKB0pl9sDR1840",
@@ -14,6 +14,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
-const db = getFirestore(app); // ✅ Export Firestore
+const db = getFirestore(app);
 
 export { messaging, db };

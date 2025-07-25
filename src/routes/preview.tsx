@@ -1,6 +1,6 @@
 import React from "react";
 import { Route, Routes } from "react-router";
-import FormPreviewPage from "@/components/form/FormPreviewPage1";
+import FormPreviewPage from "@/components/dynamicform/FormPreviewPage1";
 export const PreviewPageForm = () => {
   return (
     <Routes>

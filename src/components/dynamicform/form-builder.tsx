@@ -14,12 +14,19 @@ import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { FieldPalette } from "@/components/form/fields-palette";
-import { FormPreview } from "@/components/form/FormPreviewPage";
-import { FieldEditor } from "@/components/form/field-editor";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
+import { FieldPalette } from "@/components/dynamicform/fields-palette";
+import { FormPreview } from "@/components/dynamicform/FormPreviewPage";
+import { FieldEditor } from "@/components/dynamicform/field-editor";
 import { FormFieldType, type FormField } from "./types";
 import { toast } from "sonner";
+import { Plus } from "lucide-react"; // New import for the Plus icon
 
 // Local storage helpers
 const saveFormToLocal = (formData: any) => {
@@ -28,13 +35,11 @@ const saveFormToLocal = (formData: any) => {
     const existingIndex = existingForms.findIndex(
       (f: any) => f.id === formData.id
     );
-
     if (existingIndex >= 0) {
       existingForms[existingIndex] = formData;
     } else {
       existingForms.push(formData);
     }
-
     localStorage.setItem("forms", JSON.stringify(existingForms));
     return true;
   } catch (error) {
@@ -42,7 +47,6 @@ const saveFormToLocal = (formData: any) => {
     return false;
   }
 };
-
 const loadFormFromLocal = (id: string) => {
   try {
     const forms = JSON.parse(localStorage.getItem("forms") || "[]");
@@ -69,7 +73,6 @@ export default function FormBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useMobile();
-
   const [formId, setFormId] = useState<string>(
     id === "new" ? uuidv4() : id || uuidv4()
   );
@@ -78,6 +81,7 @@ export default function FormBuilder() {
   const [formName, setFormName] = useState("Untitled Form");
   const [isSaving, setIsSaving] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [showPaletteDrawer, setShowPaletteDrawer] = useState(false); // New state for palette drawer
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -95,7 +99,6 @@ export default function FormBuilder() {
           setIsInitialized(true);
           return;
         }
-
         if (id) {
           const formData = await loadFormFromLocal(id);
           if (formData) {
@@ -114,7 +117,6 @@ export default function FormBuilder() {
         navigate("/forms");
       }
     };
-
     if (!isInitialized) {
       loadForm();
     }
@@ -125,7 +127,6 @@ export default function FormBuilder() {
     if (over?.id === "form-drop-area") {
       const fieldType = active.data.current?.type as FormFieldType;
       const fieldLabel = active.data.current?.label as string;
-
       const newField: FormField = {
         id: uuidv4(),
         type: fieldType,
@@ -133,7 +134,6 @@ export default function FormBuilder() {
         placeholder: `Enter ${fieldLabel.toLowerCase()}`,
         required: false,
       };
-
       if (
         [FormFieldType.Select, FormFieldType.RadioGroup].includes(fieldType)
       ) {
@@ -142,9 +142,12 @@ export default function FormBuilder() {
           { label: "Option 2", value: "option2" },
         ];
       }
-
       setFormFields((prev) => [...prev, newField]);
       setSelectedFieldId(newField.id);
+      if (isMobile) {
+        // Close palette drawer after adding a field on mobile
+        setShowPaletteDrawer(false);
+      }
     }
   };
 
@@ -166,7 +169,6 @@ export default function FormBuilder() {
       toast.error("Form name cannot be empty");
       return;
     }
-
     setIsSaving(true);
     try {
       const payload = {
@@ -175,7 +177,6 @@ export default function FormBuilder() {
         fields: formFields,
         updatedAt: new Date().toISOString(),
       };
-
       const success = saveFormToLocal(payload);
       if (success) {
         toast.success("Form saved successfully");
@@ -191,17 +192,6 @@ export default function FormBuilder() {
       setIsSaving(false);
     }
   };
-
-  // const handlePreview = async () => {
-  //   if (formFields.length === 0) {
-  //     toast.error("Add at least one field to preview");
-
-  //     return;
-  //   }
-
-  //   await handleSaveForm();
-  //   navigate(`/preview/${formId}`);
-  // };
 
   const selectedField = formFields.find((f) => f.id === selectedFieldId);
   const FieldEditorComponent = selectedField ? (
@@ -221,7 +211,7 @@ export default function FormBuilder() {
       {/* Header */}
       <header className="border-b p-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate("/forms")}>
+          <Button variant="outline" onClick={() => navigate("/event")}>
             Back
           </Button>
           <Label htmlFor="formName">Form Name:</Label>
@@ -234,6 +224,15 @@ export default function FormBuilder() {
           />
         </div>
         <div className="flex gap-2">
+          {isMobile && (
+            <Button
+              variant="outline"
+              onClick={() => setShowPaletteDrawer(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" /> Add Field
+            </Button>
+          )}
+          {/* The preview button was commented out in your original code */}
           {/* <Button
             variant="outline"
             onClick={handlePreview}
@@ -241,23 +240,26 @@ export default function FormBuilder() {
           >
             Preview
           </Button> */}
-          <Button onClick={handleSaveForm} disabled={isSaving}>
+          {/* <Button onClick={handleSaveForm} disabled={isSaving}>
             {isSaving ? "Saving..." : "Save Form"}
-          </Button>
+          </Button> */}
         </div>
       </header>
-
       {/* Main Layout */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
+        {" "}
+        {/* Changed flex-direction for responsiveness */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          {/* Left Sidebar */}
-          <aside className="w-full md:w-64 p-4 border-b md:border-r md:border-b-0 shrink-0 overflow-y-auto">
-            <FieldPalette />
-          </aside>
+          {/* Left Sidebar (Field Palette) - Desktop */}
+          {!isMobile && (
+            <aside className="w-64 p-4 border-r shrink-0 overflow-y-auto">
+              <FieldPalette />
+            </aside>
+          )}
 
           {/* Center: Form Preview */}
           <main className="flex-1 p-4 overflow-y-auto">
@@ -280,9 +282,33 @@ export default function FormBuilder() {
               </DrawerContent>
             </Drawer>
           ) : (
-            <aside className="w-full md:w-80 p-4 border-t md:border-l md:border-t-0 shrink-0 overflow-y-auto">
+            <aside className="w-80 p-4 border-l shrink-0 overflow-y-auto">
               {FieldEditorComponent}
             </aside>
+          )}
+
+          {/* Field Palette Drawer (Mobile) */}
+          {isMobile && (
+            <Drawer
+              open={showPaletteDrawer}
+              onOpenChange={setShowPaletteDrawer}
+            >
+              <DrawerContent className="flex flex-col max-h-[90vh]">
+                {" "}
+                {/* Changed height to max-height and added flex-col */}
+                <DrawerHeader>
+                  <DrawerTitle>Add Form Fields</DrawerTitle>
+                  <DrawerDescription>
+                    Drag and drop fields to your form.
+                  </DrawerDescription>
+                </DrawerHeader>
+                <div className="p-4 overflow-y-auto flex-1">
+                  {" "}
+                  {/* Added flex-1 */}
+                  <FieldPalette />
+                </div>
+              </DrawerContent>
+            </Drawer>
           )}
         </DndContext>
       </div>

@@ -27,17 +27,20 @@ import {
   DynamicToggle,
   DynamicSection,
   DynamicDivider,
-} from "@/components/form/dynamic-fileds";
+} from "@/components/dynamicform/dynamic-fileds";
 import { FormFieldType } from "./types";
 import { cn } from "@/utils/cn";
 import { useEffect, useState, useMemo } from "react";
 import { useDndMonitor } from "@dnd-kit/core";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface FormPreviewProps {
   formId?: string;
   formFields?: FormFieldType[];
   onFieldClick?: (id: string) => void;
   selectedFieldId?: string | null;
+  onSaveForm?: (formData: any) => void;
 }
 
 export function FormPreview({
@@ -45,9 +48,13 @@ export function FormPreview({
   formFields: initialFormFields = [],
   onFieldClick,
   selectedFieldId,
+  onSaveForm,
 }: FormPreviewProps) {
   const [formFields, setFormFields] =
     useState<FormFieldType[]>(initialFormFields);
+  const [savedValues, setSavedValues] = useState<Record<string, any>>({});
+  const navigate = useNavigate();
+
   const { setNodeRef, isOver } = useDroppable({
     id: "form-drop-area",
     data: {
@@ -80,6 +87,7 @@ export function FormPreview({
       const form = forms.find((f: any) => f.id === formId);
       if (form) {
         setFormFields(form.fields || []);
+        setSavedValues(form.values || {});
       }
     }
   }, [formId]);
@@ -90,7 +98,6 @@ export function FormPreview({
   }, [initialFormFields]);
 
   // Handle drop events
-
   useDndMonitor({
     onDragEnd({ active, over }) {
       if (over?.id === "form-drop-area") {
@@ -155,7 +162,6 @@ export function FormPreview({
         default:
           fieldSchema = z.any().optional();
       }
-
       if (field.required && fieldSchema) {
         if (field.type === FormFieldType.Checkbox || field.type === "toggle") {
           fieldSchema = z.boolean().refine((val) => val === true, {
@@ -169,16 +175,21 @@ export function FormPreview({
       } else if (!field.required) {
         fieldSchema = fieldSchema.optional();
       }
-
       schema[field.id] = fieldSchema;
     });
     return z.object(schema);
   }, [formFields]);
 
-  // Generate default values based on current form fields
+  // Generate default values based on current form fields and saved values
   const defaultValues = useMemo(() => {
     return formFields.reduce((acc, field) => {
-      if (field.type === FormFieldType.Checkbox || field.type === "toggle") {
+      // Use saved value if available, otherwise use default
+      if (savedValues[field.id] !== undefined) {
+        acc[field.id] = savedValues[field.id];
+      } else if (
+        field.type === FormFieldType.Checkbox ||
+        field.type === "toggle"
+      ) {
         acc[field.id] = false;
       } else if (
         field.type === FormFieldType.Select ||
@@ -191,7 +202,7 @@ export function FormPreview({
       }
       return acc;
     }, {} as Record<string, any>);
-  }, [formFields]);
+  }, [formFields, savedValues]);
 
   const form = useForm<z.infer<typeof dynamicSchema>>({
     resolver: zodResolver(dynamicSchema),
@@ -207,6 +218,48 @@ export function FormPreview({
     console.log("Form submitted:", values);
     alert("Form submitted! Check console for values.");
   }
+
+  // Save form with current values
+  const handleSaveForm = () => {
+    const currentValues = form.getValues();
+    const formData = {
+      fields: formFields,
+      values: currentValues,
+    };
+
+    if (onSaveForm) {
+      onSaveForm(formData);
+    }
+
+    if (formId) {
+      const forms = JSON.parse(localStorage.getItem("forms") || "[]");
+      const formIndex = forms.findIndex((f: any) => f.id === formId);
+
+      if (formIndex >= 0) {
+        forms[formIndex] = {
+          ...forms[formIndex],
+          fields: formFields,
+          values: currentValues,
+        };
+      } else {
+        forms.push({
+          id: formId,
+          fields: formFields,
+          values: currentValues,
+          name: "New Form",
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      localStorage.setItem("forms", JSON.stringify(forms));
+      toast.success("Form Saved Successfully");
+
+      // 🔵 Navigate using react-router-dom without reload
+      setTimeout(() => {
+        navigate("/event");
+      }, 1000); // Optional: Small delay to show toast
+    }
+  };
 
   const handleFieldClick = (fieldId: string) => {
     if (onFieldClick) {
@@ -265,7 +318,6 @@ export function FormPreview({
     >
       <CardHeader>
         <CardTitle className="text-lg">Form Preview</CardTitle>
-
         <CardDescription>
           This is a preview of your form. Drag fields here to add them.
         </CardDescription>
@@ -282,7 +334,6 @@ export function FormPreview({
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {formFields.map((fieldConfig) => {
                 const DynamicComponent = renderDynamicField(fieldConfig);
-
                 return (
                   <div
                     key={fieldConfig.id}
@@ -306,9 +357,19 @@ export function FormPreview({
                   </div>
                 );
               })}
-              <Button type="submit" className="mt-6">
-                Submit Form
-              </Button>
+              <div className="flex gap-4">
+                <Button type="submit" className="mt-6">
+                  Submit
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-6 bg-transparent"
+                  onClick={handleSaveForm}
+                >
+                  Save
+                </Button>
+              </div>
             </form>
           </Form>
         )}

@@ -216,7 +216,7 @@ export function FieldEditor({
         <Separator />
         <Button
           variant="destructive"
-          className="w-full"
+          className=""
           onClick={() => onDeleteField(field.id)}
         >
           Delete Field
