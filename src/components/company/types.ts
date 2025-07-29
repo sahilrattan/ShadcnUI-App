@@ -1,17 +1,34 @@
+// Assuming this is your types.ts file, ensure companySiteId is part of Company
 export interface Company {
-  companySiteId: string;
   companyId: string;
+  companySiteId: string; // Ensure this is defined
   name: string;
   description?: string;
   email?: string;
   phone?: string;
   website?: string;
   addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  stateId?: string;
+  countryId?: string;
+  zipCode?: string;
+}
+
+export interface CompanyFormData {
+  companySiteId: string;
+  companyId: string; // For form data, it's usually present if editing, but might be empty for new
+  name: string;
+  description: string;
+  email: string;
+  phone: string;
+  website: string;
+  addressLine1: string;
   addressLine2: string;
   city: string;
   stateId: string;
   countryId: string;
-  zipCode?: string;
+  zipCode: string;
 }
 
 export interface Country {
@@ -24,5 +41,3 @@ export interface State {
   name: string;
   countryId: string;
 }
-
-export type CompanyFormData = Company; // CompanyFormData is now identical to Company for simplicity

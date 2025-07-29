@@ -1,3 +1,4 @@
+"use client";
 import {
   Dialog,
   DialogContent,
@@ -88,9 +89,7 @@ export function CompanyDetailsDialog({
               <p className="text-base font-semibold">{company.companyId}</p>
             </div>
           </div>
-
           <Separator />
-
           {/* Company Name & Description */}
           <div className="grid gap-1">
             <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">
@@ -99,7 +98,6 @@ export function CompanyDetailsDialog({
             </Label>
             <p className="text-base font-semibold">{company.name}</p>
           </div>
-
           {company.description && (
             <div className="grid gap-1">
               <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">
@@ -109,9 +107,7 @@ export function CompanyDetailsDialog({
               <p className="text-base font-semibold">{company.description}</p>
             </div>
           )}
-
           <Separator />
-
           {/* Contact Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {company.email && (
@@ -133,7 +129,6 @@ export function CompanyDetailsDialog({
               </div>
             )}
           </div>
-
           {company.website && (
             <div className="grid gap-1">
               <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">
@@ -150,9 +145,7 @@ export function CompanyDetailsDialog({
               </a>
             </div>
           )}
-
           <Separator />
-
           {/* Address Information */}
           {company.addressLine1 && (
             <div className="grid gap-1">
@@ -163,7 +156,6 @@ export function CompanyDetailsDialog({
               <p className="text-base font-semibold">{company.addressLine1}</p>
             </div>
           )}
-
           <div className="grid gap-1">
             <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">
               <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400" />
@@ -171,7 +163,6 @@ export function CompanyDetailsDialog({
             </Label>
             <p className="text-base font-semibold">{company.addressLine2}</p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="grid gap-1">
               <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">
@@ -190,7 +181,6 @@ export function CompanyDetailsDialog({
               </p>
             </div>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="grid gap-1">
               <Label className="text-sm font-medium flex items-center gap-2 text-gray-700 dark:text-gray-300">

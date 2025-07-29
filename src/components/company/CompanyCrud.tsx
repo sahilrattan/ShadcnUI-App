@@ -1,5 +1,4 @@
 "use client";
-
 import { CompanyFormDialog } from "./CompanyForm"; // This is the single dialog component
 import { CompanyDetailsDialog } from "./CompanyDetails";
 import type { Company, CompanyFormData } from "./types";
@@ -7,8 +6,8 @@ import type { Company, CompanyFormData } from "./types";
 interface CompanyCrudDialogsProps {
   isCreateDialogOpen: boolean;
   setIsCreateDialogOpen: (open: boolean) => void;
-  onAddCompany: (newCompany: Company) => void;
-  onUpdateCompany: (updatedCompany: Company) => void;
+  onAddCompany: (newCompany: CompanyFormData) => Promise<void>; // Ensure onAddCompany is awaited
+  onUpdateCompany: (updatedCompany: Company) => Promise<void>; // Ensure onUpdateCompany is awaited
   selectedCompany: Company | null;
   isEditDialogOpen: boolean;
   setIsEditDialogOpen: (open: boolean) => void;
@@ -27,13 +26,14 @@ export function CompanyCrudDialogs({
   isDetailsDialogOpen,
   setIsDetailsDialogOpen,
 }: CompanyCrudDialogsProps) {
-  const handleSaveCompany = (companyData: CompanyFormData) => {
+  const handleSaveCompany = async (companyData: CompanyFormData) => {
+    // Make this async
     if (selectedCompany) {
       // If selectedCompany exists, it's an update operation
-      onUpdateCompany({ ...selectedCompany, ...companyData });
+      await onUpdateCompany({ ...selectedCompany, ...companyData }); // Await the update
     } else {
       // Otherwise, it's a new company creation operation
-      onAddCompany(companyData);
+      await onAddCompany(companyData); // Await the add
     }
   };
 
@@ -53,7 +53,6 @@ export function CompanyCrudDialogs({
         company={selectedCompany}
         onSave={handleSaveCompany}
       />
-
       {/* The CompanyDetailsDialog is separate as it's for viewing, not editing */}
       <CompanyDetailsDialog
         open={isDetailsDialogOpen}

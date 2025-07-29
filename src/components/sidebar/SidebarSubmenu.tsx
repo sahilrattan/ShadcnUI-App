@@ -1,13 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Home, Search, Bell, User, Settings } from "lucide-react";
+import { Home, Search, Bell, User, Settings, Calendar1 } from "lucide-react";
 import {
   Tooltip,
   TooltipProvider,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { Link } from "react-router";
 
 export const SecondarySidebar = () => {
   return (
@@ -54,6 +55,18 @@ export const SecondarySidebar = () => {
           <TooltipContent side="right">Notifications</TooltipContent>
         </Tooltip>
 
+        {/* Calendar */}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Link to="/calendar">
+                <Calendar1 className="h-5 w-5" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Calendar</TooltipContent>
+        </Tooltip>
         {/* Profile */}
         <Tooltip>
           <TooltipTrigger asChild>

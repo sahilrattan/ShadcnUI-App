@@ -15,7 +15,7 @@ import SignInForm from "./modules/auth/signIn";
 import UserTable from "./components/user/UserTable";
 import Settings from "./routes/settings";
 import Account from "./components/Account";
-import { Calendar1 } from "./components/Calendar";
+// import { Calendar1 } from "./components/Calendar";
 import { Toaster } from "./components/ui/sonner";
 import KanbanBoard from "./components/kanban/KanbanBoard";
 import OrgChart from "./components/OrganisationChart";
@@ -34,10 +34,11 @@ import FallbackRoot from "./ResetFallback";
 import UserManagementPage from "./components/user/UsersList";
 import FormTemplatesPage from "./components/dynamicform/FormTemplates";
 import FormBuilder from "./components/dynamicform/form-builder";
-import FormPreviewPage from "./components/dynamicform/FormPreviewPage1";
+// import FormPreviewPage from "./components/dynamicform/FormPreviewPage1";
 import { useLocation } from "react-router-dom";
 import MediaFormPreviewPage from "./components/dynamicform/FormPreviewPage1";
 import CompanyManagementPage from "./components/company/layout";
+import { TaskManagement } from "./components/tasks/TaskManagement";
 
 const localeMessages = {
   en: () => import("@/locales/en/messages.js"),
@@ -135,7 +136,7 @@ export default function App() {
               <Route path="/data" element={<UserTable />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/account" element={<Account />} />
-              <Route path="/calendar" element={<Calendar1 />} />
+              {/* <Route path="/calendar" element={<Calendar1 />} /> */}
               <Route path="/kanban" element={<KanbanBoard />} />
               <Route path="/chart" element={<OrgChart />} />
               <Route path="/billing" element={<InvoiceForm />} />
@@ -153,7 +154,7 @@ export default function App() {
                 path="/companymanagement"
                 element={<CompanyManagementPage />}
               />
-
+              <Route path="calendar" element={<TaskManagement />} />
               {/* Full-screen routes */}
               <Route
                 path="/form-preview/:id"
